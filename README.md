@@ -1,20 +1,49 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# DataFlix Student Portal
 
-# Run and deploy your AI Studio app
+A free, open-source student portal web app for universities to manage courses, resources, timetables, and announcements. Built with modern, zoneless Angular and Tailwind CSS, and powered by signals for a reactive experience.
 
-This contains everything you need to run your app locally.
+## Backend
 
-View your app in AI Studio: https://ai.studio/apps/drive/1lx5T2YH9fo-ejuVReICPaX_xixgaLMPf
+This project is configured to use **Supabase** for its backend database, authentication, and storage. You can find the configuration in `src/supabase.config.ts`.
 
-## Run Locally
+## Deployment Guide (Vercel)
 
-**Prerequisites:**  Node.js
+This project is designed for a "buildless" deployment, meaning it doesn't need a traditional build step on the server. Vercel is the perfect platform for this.
 
+Follow these steps to deploy your portal for **free**.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 1. Create a Vercel Project
+
+- Go to your [Vercel Dashboard](https://vercel.com/dashboard).
+- Click **"Add New..."** -> **"Project"**.
+- Import the Git repository for this project.
+
+### 2. Configure the Project Settings
+
+This is the most important step. Vercel might try to auto-detect a framework. You need to override this.
+
+- **Framework Preset:** Choose **`Other`**.
+- **Build & Development Settings:**
+  - **Build Command:** **Leave this field completely empty.**
+  - **Output Directory:** Leave this as the default.
+  - **Install Command:** Leave this empty.
+- **Environment Variables:**
+  - Add your Supabase credentials. These are necessary for your deployed app to connect to its database.
+    - `SUPABASE_URL`: `https://eypbswfyjkmdsczqaaup.supabase.co`
+    - `SUPABASE_ANON_KEY`: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5cGJzd2Z5amttZHNjenFhYXVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzODYzMzksImV4cCI6MjA3ODk2MjMzOX0.tqn3nDAklCLpxknL_SlZgyzob0SB8ybMqEgCUYqgZvA`
+
+### 3. Deploy
+
+- Click the **"Deploy"** button.
+- Your site will be live in a few moments!
+
+### 4. Finding Your "Normal" URL
+
+Vercel will give you a few URLs. **You do not need to pay for a custom domain.**
+
+- After a successful deployment, Vercel shows you a preview and a "Domains" section.
+- **IGNORE** any URL that has `github.com` in it. That's just a system link for Vercel's internal use.
+- Your main, public, and free URL will look like this: **`your-project-name.vercel.app`**.
+- The easiest way to get to it is to click the **"Visit"** button on the deployment page.
+
+That's it! You have a live, working, and free student portal.
