@@ -1,0 +1,35 @@
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  imports: [FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class LoginComponent {
+  authService = inject(AuthService);
+  router = inject(Router);
+
+  email = '';
+  password = '';
+  isLoading = signal(false);
+  passwordVisible = signal(false);
+
+  togglePasswordVisibility() {
+    this.passwordVisible.update(v => !v);
+  }
+
+  onSubmit() {
+    if (!this.email || !this.password) return;
+    this.isLoading.set(true);
+    
+    // Simulate network delay
+    setTimeout(() => {
+      this.authService.login(this.email, this.password);
+      this.isLoading.set(false);
+    }, 1000);
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Copy of DataFlix Student Portal",
+  "description": "A free, open-source student portal web app for universities to manage courses, resources, timetables, and announcements. Built with Angular, Tailwind CSS, and powered by signals for a modern, reactive experience.",
+  "requestFramePermissions": []
+}
