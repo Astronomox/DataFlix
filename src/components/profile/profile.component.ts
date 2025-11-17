@@ -63,8 +63,8 @@ export class ProfileComponent {
 
   async saveProfile(): Promise<void> {
     const user = this.currentUser();
-    if (!user || !this.editableUser.name || !this.editableUser.department) {
-      this.notificationService.show('Name and department cannot be empty.', 'error');
+    if (!user || !this.editableUser.name) {
+      this.notificationService.show('Name cannot be empty.', 'error');
       return;
     }
 
@@ -97,12 +97,5 @@ export class ProfileComponent {
       await this.authService.updateProfilePicture(user, file);
       this.isUploading.set(false);
     }
-  }
-
-  onFacultyChange(event: Event): void {
-    const selectElement = event.target as HTMLSelectElement;
-    const facultyName = selectElement.value;
-    this.selectedFaculty.set(this.faculties.find(f => f.name === facultyName) || null);
-    this.editableUser.department = ''; // Reset department when faculty changes
   }
 }
