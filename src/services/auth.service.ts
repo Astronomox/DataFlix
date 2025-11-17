@@ -72,8 +72,8 @@ export class AuthService {
 
   async login(email: string, password: string): Promise<void> {
     try {
-      // FIX: Replaced `signInWithPassword` with `signIn` for compatibility with older Supabase client versions.
-      const { error } = await supabase.auth.signIn({ email, password });
+      // FIX: Updated to `signInWithPassword` for compatibility with Supabase JS v2.
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         this.notificationService.show(error.message, 'error');
@@ -95,17 +95,18 @@ export class AuthService {
         return false;
       }
 
-      // FIX: Changed `signUp` method signature to be compatible with older Supabase client versions.
-      const { data: authData, error: authError } = await supabase.auth.signUp(
-        { email, password },
-        {
+      // FIX: Updated `signUp` method signature to be compatible with Supabase JS v2.
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
           data: {
             name,
             department,
             role,
           },
-        }
-      );
+        },
+      });
 
       if (authError) {
         this.notificationService.show(authError.message, 'error');
