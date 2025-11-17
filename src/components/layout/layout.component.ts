@@ -10,7 +10,7 @@ import { SidebarComponent } from './sidebar/sidebar.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent {
-  isSidebarOpen = signal(true);
+  isSidebarOpen = signal(false);
 
   toggleSidebar() {
     this.isSidebarOpen.update(open => !open);

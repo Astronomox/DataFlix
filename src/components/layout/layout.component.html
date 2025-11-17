@@ -3,7 +3,7 @@
   
   <!-- Overlay for mobile when sidebar is open -->
   @if (isSidebarOpen()) {
-    <div (click)="toggleSidebar()" class="fixed inset-0 z-30 bg-black/60 lg:hidden" aria-hidden="true"></div>
+    <div (click)="toggleSidebar()" class="fixed inset-0 z-30 bg-black/60" aria-hidden="true"></div>
   }
 
   <div class="flex-1 flex flex-col overflow-hidden">

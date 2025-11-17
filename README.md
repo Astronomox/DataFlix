@@ -29,8 +29,8 @@ This is the most important step. Vercel might try to auto-detect a framework. Yo
   - **Install Command:** Leave this empty.
 - **Environment Variables:**
   - Add your Supabase credentials. These are necessary for your deployed app to connect to its database.
-    - `SUPABASE_URL`: `olahomachuchu`
-    - `SUPABASE_ANON_KEY`: `meowmeowgatling`
+    - `SUPABASE_URL`: `https://eypbswfyjkmdsczqaaup.supabase.co`
+    - `SUPABASE_ANON_KEY`: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5cGJzd2Z5amttZHNjenFhYXVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzODYzMzksImV4cCI6MjA3ODk2MjMzOX0.tqn3nDAklCLpxknL_SlZgyzob0SB8ybMqEgCUYqgZvA`
 
 ### 3. Deploy
 

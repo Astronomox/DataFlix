@@ -1,11 +1,8 @@
 <aside
   class="w-64 bg-white dark:bg-gray-800 overflow-y-auto transition-transform duration-300 ease-in-out
-         fixed inset-y-0 left-0 z-40 transform 
-         lg:relative lg:flex-shrink-0 lg:transition-all lg:translate-x-0"
+         fixed inset-y-0 left-0 z-40 transform"
   [class.translate-x-0]="isOpen()"
   [class.-translate-x-full]="!isOpen()"
-  [class.lg:w-64]="isOpen()"
-  [class.lg:w-0]="!isOpen()"
   [class.p-4]="isOpen()">
   
   <div class="py-4 text-gray-500 dark:text-gray-400" [class.hidden]="!isOpen()">

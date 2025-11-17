@@ -22,14 +22,16 @@ export class LoginComponent {
     this.passwordVisible.update(v => !v);
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (!this.email || !this.password) return;
     this.isLoading.set(true);
     
-    // Simulate network delay
-    setTimeout(() => {
-      this.authService.login(this.email, this.password);
+    try {
+      await this.authService.login(this.email, this.password);
+    } finally {
+      // If login fails, the user stays on the page, so we must reset the loading state.
+      // If successful, we navigate away, but this is still good practice.
       this.isLoading.set(false);
-    }, 1000);
+    }
   }
 }
