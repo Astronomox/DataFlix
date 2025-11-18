@@ -50,17 +50,19 @@ export class TimetableService {
     }
   }
 
-  async addEntry(entryData: Omit<TimetableEntry, 'id' | 'department'>): Promise<TimetableEntry | null> {
+  async addEntry(entryData: Omit<TimetableEntry, 'id' | 'department'>, department?: string): Promise<TimetableEntry | null> {
     const user = this.authService.currentUser();
-    if (!user?.department) {
-      this.notificationService.show('Could not determine your department to add entry.', 'error');
+    const targetDepartment = department || user?.department;
+
+    if (!targetDepartment) {
+      this.notificationService.show('Could not determine a department for the timetable entry.', 'error');
       return null;
     }
 
     try {
       const dataToInsert = {
         ...entryData,
-        department: user.department
+        department: targetDepartment
       };
 
       const { data, error } = await supabase
@@ -75,6 +77,24 @@ export class TimetableService {
         console.error("Error adding timetable entry:", error.message);
         this.notificationService.show('Could not add timetable entry. Please try again.', 'error');
         return null;
+    }
+  }
+
+  async updateEntry(id: string, entryData: Partial<Omit<TimetableEntry, 'id' | 'department'>>): Promise<TimetableEntry | null> {
+    try {
+      const { data, error } = await supabase
+        .from('timetable')
+        .update(entryData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as TimetableEntry;
+    } catch (error: any) {
+      console.error("Error updating timetable entry:", error.message);
+      this.notificationService.show('Could not update timetable entry. Please try again.', 'error');
+      return null;
     }
   }
 

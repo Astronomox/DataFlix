@@ -81,6 +81,24 @@ export class AnnouncementsService {
     }
   }
 
+  async updateAnnouncement(id: string, updates: { title: string, content: string }): Promise<Announcement | null> {
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Announcement;
+    } catch (error: any) {
+      console.error("Error updating announcement:", error.message);
+      this.notificationService.show('Could not update announcement. Please try again.', 'error');
+      return null;
+    }
+  }
+
   async deleteAnnouncement(id: string): Promise<boolean> {
     try {
       const { error } = await supabase

@@ -85,9 +85,14 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
               </div>
               <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ announcement.content }}</p>
               @if(isAdmin) {
-                <button (click)="openDeleteModal(announcement)" class="absolute top-4 right-4 text-red-500 hover:text-red-700">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                </button>
+                <div class="absolute top-4 right-4 flex items-center space-x-2">
+                  <button (click)="openEditModal(announcement)" class="p-1 text-blue-500 hover:text-blue-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
+                  </button>
+                  <button (click)="openDeleteModal(announcement)" class="p-1 text-red-500 hover:text-red-700">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                  </button>
+                </div>
               }
             </div>
           } @empty {
@@ -100,6 +105,35 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
         </div>
       }
     </div>
+
+    <!-- Edit Announcement Modal -->
+    @if (isEditModalOpen()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" (click)="closeEditModal()">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-lg" (click)="$event.stopPropagation()">
+          <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">Edit Announcement</h3>
+          <form (ngSubmit)="confirmEdit()" #editForm="ngForm" class="space-y-4">
+            <div>
+              <label for="editTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+              <input type="text" id="editTitle" name="editTitle" [(ngModel)]="editableAnnouncement.title" required
+                class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+            </div>
+            <div>
+              <label for="editContent" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label>
+              <textarea id="editContent" name="editContent" [(ngModel)]="editableAnnouncement.content" required rows="6"
+                class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"></textarea>
+            </div>
+            <div class="flex justify-end space-x-4 pt-4">
+              <button type="button" (click)="closeEditModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+                Cancel
+              </button>
+              <button type="submit" [disabled]="editForm.invalid" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50">
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
 
     <!-- Delete Confirmation Modal -->
     @if (isDeleteModalOpen()) {
@@ -152,6 +186,11 @@ export class AnnouncementsComponent implements OnInit {
   isDeleteModalOpen = signal(false);
   announcementToDelete = signal<Announcement | null>(null);
   
+  // Edit modal state
+  isEditModalOpen = signal(false);
+  announcementToEdit = signal<Announcement | null>(null);
+  editableAnnouncement = { title: '', content: '' };
+
   newAnnouncement = {
     title: '',
     content: ''
@@ -235,5 +274,37 @@ export class AnnouncementsComponent implements OnInit {
       this.deleteAnnouncement(announcement.id);
     }
     this.closeDeleteModal();
+  }
+
+  // --- Edit Modal Methods ---
+  openEditModal(announcement: Announcement) {
+    this.announcementToEdit.set(announcement);
+    this.editableAnnouncement.title = announcement.title;
+    this.editableAnnouncement.content = announcement.content;
+    this.isEditModalOpen.set(true);
+  }
+
+  closeEditModal() {
+    this.isEditModalOpen.set(false);
+    this.announcementToEdit.set(null);
+  }
+
+  async confirmEdit() {
+    const announcement = this.announcementToEdit();
+    if (!announcement || !this.editableAnnouncement.title || !this.editableAnnouncement.content) {
+        this.notificationService.show('Title and Content cannot be empty.', 'warning');
+        return;
+    }
+    
+    const updatedAnnouncement = await this.announcementsService.updateAnnouncement(announcement.id, {
+        title: this.editableAnnouncement.title,
+        content: this.editableAnnouncement.content
+    });
+
+    if (updatedAnnouncement) {
+        this.announcements.update(list => list.map(a => a.id === updatedAnnouncement.id ? updatedAnnouncement : a));
+        this.notificationService.show('Announcement updated successfully.', 'success');
+        this.closeEditModal();
+    }
   }
 }

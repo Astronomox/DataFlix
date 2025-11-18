@@ -31,12 +31,23 @@ export class TimetableComponent implements OnInit {
   isDeleteModalOpen = signal(false);
   entryToDelete = signal<TimetableEntry | null>(null);
 
+  // Edit modal state
+  isEditModalOpen = signal(false);
+  entryToEdit = signal<TimetableEntry | null>(null);
+  editableEntry: Omit<TimetableEntry, 'id' | 'department'> = {
+    course: '',
+    time: '',
+    location: '',
+    day: 'Monday',
+  };
+
   newEntry: Omit<TimetableEntry, 'id' | 'department'> = {
     course: '',
     time: '',
     location: '',
     day: 'Monday',
   };
+  departmentForNewEntry = signal('');
 
   readonly weekdays: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -105,12 +116,22 @@ export class TimetableComponent implements OnInit {
         this.notificationService.show('All fields are required.', 'warning');
         return;
     }
-    const addedEntry = await this.timetableService.addEntry(this.newEntry);
+
+    const department = this.isSuperAdmin ? this.departmentForNewEntry() : undefined;
+    if (this.isSuperAdmin && !department) {
+      this.notificationService.show('Please select a department for the new entry.', 'warning');
+      return;
+    }
+
+    const addedEntry = await this.timetableService.addEntry(this.newEntry, department);
     if (addedEntry) {
       this.timetable.update(entries => [...entries, addedEntry]);
       this.notificationService.show('Entry added successfully!', 'success');
       // Reset form
       this.newEntry = { course: '', time: '', location: '', day: 'Monday' };
+      if (this.isSuperAdmin) {
+        this.departmentForNewEntry.set('');
+      }
     }
   }
 
@@ -163,5 +184,40 @@ export class TimetableComponent implements OnInit {
       this.deleteEntry(entry.id);
     }
     this.closeDeleteModal();
+  }
+
+  // --- Edit Modal Methods ---
+  openEditModal(entry: TimetableEntry) {
+    this.entryToEdit.set(entry);
+    // Create a copy for editing
+    this.editableEntry = { 
+      course: entry.course,
+      time: entry.time,
+      location: entry.location,
+      day: entry.day
+    };
+    this.isEditModalOpen.set(true);
+  }
+
+  closeEditModal() {
+    this.isEditModalOpen.set(false);
+    this.entryToEdit.set(null);
+  }
+
+  async confirmEdit() {
+    const entry = this.entryToEdit();
+    if (!entry) return;
+
+    if (!this.editableEntry.course || !this.editableEntry.time || !this.editableEntry.location || !this.editableEntry.day) {
+        this.notificationService.show('All fields are required for the update.', 'warning');
+        return;
+    }
+
+    const updatedEntry = await this.timetableService.updateEntry(entry.id, this.editableEntry);
+    if (updatedEntry) {
+      this.timetable.update(entries => entries.map(e => e.id === updatedEntry.id ? updatedEntry : e));
+      this.notificationService.show('Timetable entry updated successfully!', 'success');
+      this.closeEditModal();
+    }
   }
 }
