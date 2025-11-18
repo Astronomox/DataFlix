@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { supabase } from '../supabase.config';
 import { NotificationService } from './notification.service';
+import { AuthService } from './auth.service';
 
 export interface Announcement {
   id: string;
@@ -8,18 +9,35 @@ export interface Announcement {
   content: string;
   author: string;
   date: string;
+  department: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AnnouncementsService {
   private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
 
   async getAnnouncements(): Promise<Announcement[]> {
+    const user = this.authService.currentUser();
+    if (!user) return [];
+
+    const isSuperAdmin = this.authService.isSuperAdmin();
+
+    if (!isSuperAdmin && !user.department) {
+      this.notificationService.show('Could not determine your department.', 'error');
+      return [];
+    }
+    
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('announcements')
-        .select('*')
-        .order('date', { ascending: false });
+        .select('*');
+
+      if (!isSuperAdmin) {
+        query = query.eq('department', user.department!);
+      }
+
+      const { data, error } = await query.order('date', { ascending: false });
 
       if (error) throw error;
       return data as Announcement[];
@@ -30,13 +48,22 @@ export class AnnouncementsService {
     }
   }
   
-  async createAnnouncement(title: string, content: string, author: string): Promise<Announcement | null> {
+  async createAnnouncement(title: string, content: string, author: string, department?: string): Promise<Announcement | null> {
+    const user = this.authService.currentUser();
+    const targetDepartment = department || user?.department;
+
+    if (!targetDepartment) {
+      this.notificationService.show('Could not determine a department to post the announcement to.', 'error');
+      return null;
+    }
+
     try {
       const newAnnouncementData = {
         title,
         content,
         author,
         date: new Date().toISOString(),
+        department: targetDepartment
       };
       
       const { data, error } = await supabase

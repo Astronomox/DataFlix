@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { supabase } from '../supabase.config';
 import { NotificationService } from './notification.service';
+import { AuthService } from './auth.service';
 
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
 
@@ -10,17 +11,35 @@ export interface TimetableEntry {
   time: string;
   course: string;
   location: string;
+  department: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class TimetableService {
   private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
   
   async getTimetable(): Promise<TimetableEntry[]> {
+    const user = this.authService.currentUser();
+    if (!user) return [];
+
+    const isSuperAdmin = this.authService.isSuperAdmin();
+
+    if (!isSuperAdmin && !user.department) {
+      this.notificationService.show('Could not determine your department.', 'error');
+      return [];
+    }
+
     try {
-      const { data, error } = await supabase
+      let query = supabase
           .from('timetable')
           .select('*');
+
+      if (!isSuperAdmin) {
+        query = query.eq('department', user.department!);
+      }
+      
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as TimetableEntry[];
@@ -31,11 +50,22 @@ export class TimetableService {
     }
   }
 
-  async addEntry(entryData: Omit<TimetableEntry, 'id'>): Promise<TimetableEntry | null> {
+  async addEntry(entryData: Omit<TimetableEntry, 'id' | 'department'>): Promise<TimetableEntry | null> {
+    const user = this.authService.currentUser();
+    if (!user?.department) {
+      this.notificationService.show('Could not determine your department to add entry.', 'error');
+      return null;
+    }
+
     try {
+      const dataToInsert = {
+        ...entryData,
+        department: user.department
+      };
+
       const { data, error } = await supabase
           .from('timetable')
-          .insert(entryData)
+          .insert(dataToInsert)
           .select()
           .single();
 

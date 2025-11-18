@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { supabase } from '../supabase.config';
 import { NotificationService } from './notification.service';
+import { AuthService } from './auth.service';
 
 export interface Material {
   id: string;
@@ -11,19 +12,36 @@ export interface Material {
   upload_date: string;
   file_path: string;
   file_url?: string;
+  department: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class MaterialsService {
   private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
 
   async getMaterials(): Promise<Material[]> {
+    const user = this.authService.currentUser();
+    if (!user) return [];
+
+    const isSuperAdmin = this.authService.isSuperAdmin();
+
+    if (!isSuperAdmin && !user.department) {
+      this.notificationService.show('Could not determine your department.', 'error');
+      return [];
+    }
+
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('materials')
-        .select('*')
-        .order('upload_date', { ascending: false });
-      
+        .select('*');
+
+      if (!isSuperAdmin) {
+        query = query.eq('department', user.department!);
+      }
+
+      const { data, error } = await query.order('upload_date', { ascending: false });
+
       if (error) throw error;
       
       return data.map(material => {
@@ -60,8 +78,14 @@ export class MaterialsService {
     }
   }
 
-  async uploadMaterial(newMaterialData: Omit<Material, 'id' | 'upload_date' | 'file_path' | 'file_url'>, file: File): Promise<Material | null> {
-    const filePath = `${newMaterialData.course.replace(/\s+/g, '_')}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+  async uploadMaterial(newMaterialData: Omit<Material, 'id' | 'upload_date' | 'file_path' | 'file_url' | 'department'>, file: File): Promise<Material | null> {
+    const user = this.authService.currentUser();
+    if (!user?.department) {
+      this.notificationService.show('Could not determine your department to upload material.', 'error');
+      return null;
+    }
+    
+    const filePath = `${user.department.replace(/\s+/g, '_')}/${newMaterialData.course.replace(/\s+/g, '_')}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     
     try {
       const { error: uploadError } = await supabase.storage
@@ -72,6 +96,7 @@ export class MaterialsService {
 
       const materialToInsert = {
           ...newMaterialData,
+          department: user.department,
           upload_date: new Date().toISOString().split('T')[0],
           file_path: filePath,
       };

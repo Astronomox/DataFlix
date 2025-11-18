@@ -4,6 +4,7 @@ import { TimetableService, TimetableEntry, Day } from '../../services/timetable.
 import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { NotificationService } from '../../services/notification.service';
+import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-timetable',
@@ -18,8 +19,11 @@ export class TimetableComponent implements OnInit {
 
   isLoading = signal(true);
   isAdmin = this.authService.isAdmin();
+  isSuperAdmin = this.authService.isSuperAdmin();
   timetable = signal<TimetableEntry[]>([]);
-
+  
+  allDepartments = signal<string[]>([]);
+  selectedDepartment = signal<string>('');
   selectedCourse = signal<string>('');
   selectedLocation = signal<string>('');
 
@@ -27,7 +31,7 @@ export class TimetableComponent implements OnInit {
   isDeleteModalOpen = signal(false);
   entryToDelete = signal<TimetableEntry | null>(null);
 
-  newEntry: Omit<TimetableEntry, 'id'> = {
+  newEntry: Omit<TimetableEntry, 'id' | 'department'> = {
     course: '',
     time: '',
     location: '',
@@ -46,13 +50,17 @@ export class TimetableComponent implements OnInit {
     return [...new Set(allLocations)].sort();
   });
 
-  isAnyFilterActive = computed(() => this.selectedCourse() !== '' || this.selectedLocation() !== '');
+  isAnyFilterActive = computed(() => this.selectedDepartment() !== '' || this.selectedCourse() !== '' || this.selectedLocation() !== '');
 
   filteredTimetable = computed(() => {
     let filtered = this.timetable();
     const course = this.selectedCourse();
     const location = this.selectedLocation();
+    const dept = this.selectedDepartment();
 
+    if (this.isSuperAdmin && dept) {
+      filtered = filtered.filter(entry => entry.department === dept);
+    }
     if (course) {
       filtered = filtered.filter(entry => entry.course === course);
     }
@@ -79,6 +87,10 @@ export class TimetableComponent implements OnInit {
 
   ngOnInit() {
     this.loadTimetable();
+    if (this.isSuperAdmin) {
+      const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
+      this.allDepartments.set([...new Set(depts)].sort());
+    }
   }
 
   async loadTimetable() {
@@ -110,6 +122,10 @@ export class TimetableComponent implements OnInit {
     }
   }
 
+  onDepartmentChange(event: Event) {
+    this.selectedDepartment.set((event.target as HTMLSelectElement).value);
+  }
+
   onCourseChange(event: Event) {
     this.selectedCourse.set((event.target as HTMLSelectElement).value);
   }
@@ -119,9 +135,13 @@ export class TimetableComponent implements OnInit {
   }
 
   clearFilters() {
+    this.selectedDepartment.set('');
     this.selectedCourse.set('');
     this.selectedLocation.set('');
     // Need to reset the dropdowns manually if they are not bound with ngModel
+    if (this.isSuperAdmin) {
+      (document.getElementById('departmentFilter') as HTMLSelectElement).value = '';
+    }
     (document.getElementById('courseFilter') as HTMLSelectElement).value = '';
     (document.getElementById('locationFilter') as HTMLSelectElement).value = '';
   }

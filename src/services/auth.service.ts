@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { User, UserRole } from '../models/user.model';
 import { NotificationService } from './notification.service';
 import { supabase } from '../supabase.config';
+import { UNILAG_FACULTIES } from '../data/unilag-courses';
 // FIX: Removed Supabase v2 type imports that are not available in older versions, which caused compilation errors.
 // The types for session and user will be inferred as `any`.
 // import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -46,6 +47,11 @@ export class AuthService {
     return this.authInitializedPromise;
   }
 
+  private findFacultyForDepartment(department: string): string | undefined {
+    const faculty = UNILAG_FACULTIES.find(f => f.courses.includes(department));
+    return faculty?.name;
+  }
+
   // FIX: The type for the supabaseUser parameter is set to `any` to resolve import errors.
   private async loadUserProfile(supabaseUser: any) {
     try {
@@ -58,7 +64,11 @@ export class AuthService {
       if (error) throw error;
   
       if (data) {
-        this.currentUser.set(data as User);
+        const userWithFaculty: User = {
+            ...data,
+            faculty: this.findFacultyForDepartment(data.department)
+        };
+        this.currentUser.set(userWithFaculty);
       } else {
         this.currentUser.set(null);
       }
@@ -138,6 +148,10 @@ export class AuthService {
 
   isAdmin(): boolean {
     return this.currentUser()?.role === UserRole.Admin;
+  }
+
+  isSuperAdmin(): boolean {
+    return this.currentUser()?.email === 'abdullahioriola02@gmail.com';
   }
 
   async updateUserProfile(uid: string, data: { name: string; department: string; birthday: string | null; phone: string | null; }): Promise<boolean> {

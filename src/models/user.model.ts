@@ -10,6 +10,7 @@ export interface User {
   password?: string;
   role: UserRole;
   department: string;
+  faculty?: string;
   photourl?: string;
   birthday?: string;
   phone?: string;

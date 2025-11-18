@@ -1,9 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AnnouncementsService, Announcement } from '../../services/announcements.service';
 import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { NotificationService } from '../../services/notification.service';
+import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-announcements',
@@ -14,12 +15,48 @@ import { NotificationService } from '../../services/notification.service';
           <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Announcements</h1>
           <p class="mt-1 text-gray-600 dark:text-gray-400">Latest news and updates from the department.</p>
         </div>
+        @if (isSuperAdmin) {
+          <div class="relative w-full md:w-64">
+            <select 
+              (change)="onDepartmentChange($event)"
+              class="w-full pl-4 pr-10 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
+              <option value="">All Departments</option>
+              @for(dept of allDepartments(); track dept) {
+                <option [value]="dept">{{dept}}</option>
+              }
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            </div>
+          </div>
+        }
       </div>
       
       @if(isAdmin) {
         <div class="mb-8 p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
           <h3 class="text-lg font-bold mb-4">Post a New Announcement</h3>
           <form (ngSubmit)="postAnnouncement()" #announcementForm="ngForm" class="space-y-4">
+            @if (isSuperAdmin) {
+              <div>
+                <label for="departmentSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Post to Department</label>
+                <div class="relative">
+                  <select 
+                    id="departmentSelect"
+                    name="departmentForNewAnnouncement"
+                    [(ngModel)]="departmentForNewAnnouncement"
+                    required
+                    class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
+                    <option value="" disabled>Select a department</option>
+                    @for(dept of allDepartments(); track dept) {
+                      <option [value]="dept" class="text-black dark:text-white bg-white dark:bg-gray-800">{{dept}}</option>
+                    }
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                  </div>
+                </div>
+              </div>
+            }
             <input type="text" placeholder="Title" [(ngModel)]="newAnnouncement.title" name="title" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
             <textarea placeholder="Content..." [(ngModel)]="newAnnouncement.content" name="content" required rows="4" class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
             <button type="submit" [disabled]="announcementForm.invalid" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition disabled:opacity-50">Post Announcement</button>
@@ -36,10 +73,16 @@ import { NotificationService } from '../../services/notification.service';
         </div>
       } @else {
         <div class="space-y-6">
-          @for(announcement of announcements(); track announcement.id) {
+          @for(announcement of filteredAnnouncements(); track announcement.id) {
             <div class="relative bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-6">
               <h2 class="text-xl font-bold text-gray-800 dark:text-white">{{ announcement.title }}</h2>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Posted by {{ announcement.author }} on {{ announcement.date | date: 'mediumDate' }}</p>
+              <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <span>Posted by {{ announcement.author }} on {{ announcement.date | date: 'mediumDate' }}</span>
+                @if(isSuperAdmin) {
+                  <span class="mx-2">|</span>
+                  <span class="font-semibold text-purple-600 dark:text-purple-400">{{ announcement.department }}</span>
+                }
+              </div>
               <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ announcement.content }}</p>
               @if(isAdmin) {
                 <button (click)="openDeleteModal(announcement)" class="absolute top-4 right-4 text-red-500 hover:text-red-700">
@@ -99,7 +142,11 @@ export class AnnouncementsComponent implements OnInit {
 
   isLoading = signal(true);
   isAdmin = this.authService.isAdmin();
-  announcements = signal<Announcement[]>([]);
+  isSuperAdmin = this.authService.isSuperAdmin();
+  
+  private announcements = signal<Announcement[]>([]);
+  allDepartments = signal<string[]>([]);
+  selectedDepartment = signal('');
 
   // Delete modal state
   isDeleteModalOpen = signal(false);
@@ -109,9 +156,22 @@ export class AnnouncementsComponent implements OnInit {
     title: '',
     content: ''
   };
+  departmentForNewAnnouncement = '';
+
+  filteredAnnouncements = computed(() => {
+    const dept = this.selectedDepartment();
+    if (!this.isSuperAdmin || !dept) {
+      return this.announcements();
+    }
+    return this.announcements().filter(a => a.department === dept);
+  });
 
   ngOnInit() {
     this.loadAnnouncements();
+    if (this.isSuperAdmin) {
+      const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
+      this.allDepartments.set([...new Set(depts)].sort());
+    }
   }
 
   loadAnnouncements() {
@@ -122,15 +182,29 @@ export class AnnouncementsComponent implements OnInit {
     });
   }
 
+  onDepartmentChange(event: Event) {
+    this.selectedDepartment.set((event.target as HTMLSelectElement).value);
+  }
+
   postAnnouncement() {
     const author = this.authService.currentUser()?.name || 'Admin';
-    this.announcementsService.createAnnouncement(this.newAnnouncement.title, this.newAnnouncement.content, author)
+    const department = this.isSuperAdmin ? this.departmentForNewAnnouncement : undefined;
+
+    if (this.isSuperAdmin && !department) {
+      this.notificationService.show('Please select a department to post the announcement to.', 'warning');
+      return;
+    }
+
+    this.announcementsService.createAnnouncement(this.newAnnouncement.title, this.newAnnouncement.content, author, department)
       .then(announcement => {
         if (announcement) {
           this.announcements.update(list => [announcement, ...list]);
           this.notificationService.show('Announcement posted!', 'success');
           this.newAnnouncement.title = '';
           this.newAnnouncement.content = '';
+          if (this.isSuperAdmin) {
+            this.departmentForNewAnnouncement = '';
+          }
         }
       });
   }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { MaterialsService, Material } from '../../services/materials.service';
+import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-materials',
@@ -17,8 +18,11 @@ export class MaterialsComponent implements OnInit {
   materialsService = inject(MaterialsService);
   
   isAdmin = this.authService.isAdmin();
+  isSuperAdmin = this.authService.isSuperAdmin();
   isLoading = signal(true);
   searchTerm = signal('');
+  selectedDepartment = signal('');
+  allDepartments = signal<string[]>([]);
 
   // Upload modal state
   isUploadModalOpen = signal(false);
@@ -34,10 +38,17 @@ export class MaterialsComponent implements OnInit {
 
   filteredMaterials = computed(() => {
     const term = this.searchTerm().toLowerCase();
-    if (!term) {
-      return this.allMaterials();
+    const dept = this.selectedDepartment();
+    let materials = this.allMaterials();
+
+    if (this.isSuperAdmin && dept) {
+      materials = materials.filter(m => m.department === dept);
     }
-    return this.allMaterials().filter(
+
+    if (!term) {
+      return materials;
+    }
+    return materials.filter(
       material =>
         material.title.toLowerCase().includes(term) ||
         material.course.toLowerCase().includes(term)
@@ -46,6 +57,10 @@ export class MaterialsComponent implements OnInit {
   
   ngOnInit() {
     this.loadMaterials();
+    if (this.isSuperAdmin) {
+      const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
+      this.allDepartments.set([...new Set(depts)].sort());
+    }
   }
 
   loadMaterials() {
@@ -54,6 +69,10 @@ export class MaterialsComponent implements OnInit {
       this.allMaterials.set(materials);
       this.isLoading.set(false);
     });
+  }
+
+  onDepartmentChange(event: Event) {
+    this.selectedDepartment.set((event.target as HTMLSelectElement).value);
   }
 
   onSearch(event: Event) {
