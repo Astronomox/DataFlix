@@ -15,48 +15,79 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
           <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Announcements</h1>
           <p class="mt-1 text-gray-600 dark:text-gray-400">Latest news and updates from the department.</p>
         </div>
-        @if (isSuperAdmin) {
-          <div class="relative w-full md:w-64">
+        <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          <div class="relative flex-grow min-w-40">
             <select 
-              (change)="onDepartmentChange($event)"
+              (change)="onLevelChange($event)"
+              [value]="selectedLevel()"
               class="w-full pl-4 pr-10 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
-              <option value="">All Departments</option>
-              @for(dept of allDepartments(); track dept) {
-                <option [value]="dept">{{dept}}</option>
+              <option value="">All Levels</option>
+              @for(level of levels; track level) {
+                <option [value]="level">{{level}} Level</option>
               }
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
               <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
             </div>
           </div>
-        }
+          @if (isSuperAdmin) {
+            <div class="relative w-full md:w-64">
+              <select 
+                (change)="onDepartmentChange($event)"
+                class="w-full pl-4 pr-10 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
+                <option value="">All Departments</option>
+                @for(dept of allDepartments(); track dept) {
+                  <option [value]="dept">{{dept}}</option>
+                }
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
+          }
+        </div>
       </div>
       
       @if(isAdmin) {
         <div class="mb-8 p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
           <h3 class="text-lg font-bold mb-4">Post a New Announcement</h3>
           <form (ngSubmit)="postAnnouncement()" #announcementForm="ngForm" class="space-y-4">
-            @if (isSuperAdmin) {
-              <div>
-                <label for="departmentSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Post to Department</label>
-                <div class="relative">
-                  <select 
-                    id="departmentSelect"
-                    name="departmentForNewAnnouncement"
-                    [(ngModel)]="departmentForNewAnnouncement"
-                    required
-                    class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
-                    <option value="" disabled>Select a department</option>
-                    @for(dept of allDepartments(); track dept) {
-                      <option [value]="dept" class="text-black dark:text-white bg-white dark:bg-gray-800">{{dept}}</option>
-                    }
-                  </select>
-                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              @if (isSuperAdmin) {
+                <div>
+                  <label for="departmentSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Post to Department</label>
+                  <div class="relative">
+                    <select 
+                      id="departmentSelect"
+                      name="departmentForNewAnnouncement"
+                      [(ngModel)]="departmentForNewAnnouncement"
+                      required
+                      class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
+                      <option value="" disabled>Select a department</option>
+                      @for(dept of allDepartments(); track dept) {
+                        <option [value]="dept" class="text-black dark:text-white bg-white dark:bg-gray-800">{{dept}}</option>
+                      }
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                      <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
                   </div>
                 </div>
+              }
+              <div>
+                 <label for="levelSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Level (Optional)</label>
+                 <select 
+                    id="levelSelect"
+                    name="levelForNewAnnouncement"
+                    [(ngModel)]="newAnnouncement.level"
+                    class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">All Levels</option>
+                    @for(level of levels; track level) {
+                      <option [value]="level">{{level}} Level</option>
+                    }
+                  </select>
               </div>
-            }
+            </div>
             <input type="text" placeholder="Title" [(ngModel)]="newAnnouncement.title" name="title" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
             <textarea placeholder="Content..." [(ngModel)]="newAnnouncement.content" name="content" required rows="4" class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
             <button type="submit" [disabled]="announcementForm.invalid" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition disabled:opacity-50">Post Announcement</button>
@@ -76,11 +107,17 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
           @for(announcement of filteredAnnouncements(); track announcement.id) {
             <div class="relative bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-6">
               <h2 class="text-xl font-bold text-gray-800 dark:text-white">{{ announcement.title }}</h2>
-              <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+              <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2 flex-wrap">
                 <span>Posted by {{ announcement.author }} on {{ announcement.date | date: 'mediumDate' }}</span>
                 @if(isSuperAdmin) {
                   <span class="mx-2">|</span>
                   <span class="font-semibold text-purple-600 dark:text-purple-400">{{ announcement.department }}</span>
+                }
+                @if(announcement.level) {
+                   <span class="mx-2">|</span>
+                   <span class="px-2 py-0.5 font-semibold leading-tight text-green-700 bg-green-100 rounded-full dark:bg-green-700 dark:text-green-100 text-xs">
+                    {{ announcement.level }} Level
+                  </span>
                 }
               </div>
               <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ announcement.content }}</p>
@@ -181,6 +218,8 @@ export class AnnouncementsComponent implements OnInit {
   private announcements = signal<Announcement[]>([]);
   allDepartments = signal<string[]>([]);
   selectedDepartment = signal('');
+  selectedLevel = signal('');
+  levels = [100, 200, 300, 400, 500, 600];
 
   // Delete modal state
   isDeleteModalOpen = signal(false);
@@ -193,16 +232,26 @@ export class AnnouncementsComponent implements OnInit {
 
   newAnnouncement = {
     title: '',
-    content: ''
+    content: '',
+    level: '' as number | ''
   };
   departmentForNewAnnouncement = '';
 
   filteredAnnouncements = computed(() => {
     const dept = this.selectedDepartment();
-    if (!this.isSuperAdmin || !dept) {
-      return this.announcements();
+    const level = this.selectedLevel();
+    let announcements = this.announcements();
+
+    if (this.isSuperAdmin && dept) {
+      announcements = announcements.filter(a => a.department === dept);
     }
-    return this.announcements().filter(a => a.department === dept);
+
+    if (level) {
+      // Show announcements for the specific level OR announcements with no level set (for everyone)
+      announcements = announcements.filter(a => a.level === +level || !a.level);
+    }
+    
+    return announcements;
   });
 
   ngOnInit() {
@@ -210,6 +259,11 @@ export class AnnouncementsComponent implements OnInit {
     if (this.isSuperAdmin) {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
+    } else {
+      const userLevel = this.authService.currentUser()?.level;
+      if (userLevel) {
+        this.selectedLevel.set(userLevel.toString());
+      }
     }
   }
 
@@ -225,6 +279,10 @@ export class AnnouncementsComponent implements OnInit {
     this.selectedDepartment.set((event.target as HTMLSelectElement).value);
   }
 
+  onLevelChange(event: Event) {
+    this.selectedLevel.set((event.target as HTMLSelectElement).value);
+  }
+
   postAnnouncement() {
     const author = this.authService.currentUser()?.name || 'Admin';
     const department = this.isSuperAdmin ? this.departmentForNewAnnouncement : undefined;
@@ -234,13 +292,14 @@ export class AnnouncementsComponent implements OnInit {
       return;
     }
 
-    this.announcementsService.createAnnouncement(this.newAnnouncement.title, this.newAnnouncement.content, author, department)
+    this.announcementsService.createAnnouncement(this.newAnnouncement.title, this.newAnnouncement.content, author, department, this.newAnnouncement.level)
       .then(announcement => {
         if (announcement) {
           this.announcements.update(list => [announcement, ...list]);
           this.notificationService.show('Announcement posted!', 'success');
           this.newAnnouncement.title = '';
           this.newAnnouncement.content = '';
+          this.newAnnouncement.level = '';
           if (this.isSuperAdmin) {
             this.departmentForNewAnnouncement = '';
           }

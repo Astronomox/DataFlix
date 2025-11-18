@@ -22,13 +22,15 @@ export class ProfileComponent {
   
   faculties: Faculty[] = UNILAG_FACULTIES;
   selectedFaculty = signal<Faculty | null>(null);
+  levels = [100, 200, 300, 400, 500, 600];
 
   // Form model for editing
   editableUser = {
     name: '',
     department: '',
     birthday: '',
-    phone: ''
+    phone: '',
+    level: 100
   };
 
   userAvatarUrl = computed(() => {
@@ -51,6 +53,7 @@ export class ProfileComponent {
       this.editableUser.department = user.department;
       this.editableUser.birthday = user.birthday || '';
       this.editableUser.phone = user.phone || '';
+      this.editableUser.level = user.level;
       this.selectedFaculty.set(this.findFacultyForDepartment(user.department));
       this.isEditing.set(true);
     }
@@ -73,7 +76,8 @@ export class ProfileComponent {
       name: this.editableUser.name,
       department: this.editableUser.department,
       birthday: this.editableUser.birthday || null,
-      phone: this.editableUser.phone || null
+      phone: this.editableUser.phone || null,
+      level: this.editableUser.level,
     };
     const success = await this.authService.updateUserProfile(user.id, dataToSave);
     

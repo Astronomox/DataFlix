@@ -66,6 +66,7 @@ export class AuthService {
       if (data) {
         const userWithFaculty: User = {
             ...data,
+            level: data.level || 100, // Ensure backward compatibility for old users
             faculty: this.findFacultyForDepartment(data.department)
         };
         this.currentUser.set(userWithFaculty);
@@ -98,7 +99,7 @@ export class AuthService {
     }
   }
 
-  async register(name: string, email: string, password: string, department: string, role: UserRole, secretCode?: string): Promise<boolean> {
+  async register(name: string, email: string, password: string, department: string, role: UserRole, level: number, secretCode?: string): Promise<boolean> {
     try {
       if (role === UserRole.Admin && secretCode !== 'dataflix-admin-2026') {
         this.notificationService.show('Invalid Admin Secret Code.', 'error');
@@ -114,6 +115,7 @@ export class AuthService {
             name,
             department,
             role,
+            level,
           },
         },
       });
@@ -154,7 +156,7 @@ export class AuthService {
     return this.currentUser()?.email === 'abdullahioriola02@gmail.com';
   }
 
-  async updateUserProfile(uid: string, data: { name: string; department: string; birthday: string | null; phone: string | null; }): Promise<boolean> {
+  async updateUserProfile(uid: string, data: { name: string; department: string; birthday: string | null; phone: string | null; level: number; }): Promise<boolean> {
     try {
       const { error } = await supabase
           .from('users')

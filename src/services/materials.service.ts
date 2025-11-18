@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, effect } from '@angular/core';
 import { supabase } from '../supabase.config';
 import { NotificationService } from './notification.service';
 import { AuthService } from './auth.service';
@@ -13,14 +13,28 @@ export interface Material {
   file_path: string;
   file_url?: string;
   department: string;
+  level?: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class MaterialsService {
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
+  private materialsPromise: Promise<Material[]> | null = null;
+
+  constructor() {
+    effect(() => {
+      // When current user changes (login/logout), clear the cache.
+      this.authService.currentUser(); 
+      this.materialsPromise = null;
+    });
+  }
 
   async getMaterials(): Promise<Material[]> {
+    if (this.materialsPromise) {
+      return this.materialsPromise;
+    }
+
     const user = this.authService.currentUser();
     if (!user) return [];
 
@@ -31,28 +45,32 @@ export class MaterialsService {
       return [];
     }
 
-    try {
-      let query = supabase
-        .from('materials')
-        .select('*');
+    this.materialsPromise = (async () => {
+      try {
+        let query = supabase
+          .from('materials')
+          .select('*');
 
-      if (!isSuperAdmin) {
-        query = query.eq('department', user.department!);
+        if (!isSuperAdmin) {
+          query = query.eq('department', user.department!);
+        }
+
+        const { data, error } = await query.order('upload_date', { ascending: false });
+
+        if (error) throw error;
+        
+        return data.map(material => {
+          const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(material.file_path);
+          return { ...material, file_url: publicUrl };
+        }) as Material[];
+      } catch (error: any) {
+        console.error("Error fetching materials:", error.message);
+        this.notificationService.show('Error fetching materials. Please check your network connection and try again.', 'error');
+        this.materialsPromise = null; // Clear promise on error to allow retries
+        return [];
       }
-
-      const { data, error } = await query.order('upload_date', { ascending: false });
-
-      if (error) throw error;
-      
-      return data.map(material => {
-        const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(material.file_path);
-        return { ...material, file_url: publicUrl };
-      }) as Material[];
-    } catch (error: any) {
-      console.error("Error fetching materials:", error.message);
-      this.notificationService.show('Error fetching materials. Please check your network connection and try again.', 'error');
-      return [];
-    }
+    })();
+    return this.materialsPromise;
   }
 
   async deleteMaterial(material: Material): Promise<boolean> {
@@ -70,6 +88,7 @@ export class MaterialsService {
 
       if (error) throw error;
       
+      this.materialsPromise = null; // Invalidate cache
       return true;
     } catch (error: any) {
       console.error("Error deleting material:", error.message);
@@ -93,9 +112,12 @@ export class MaterialsService {
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
+      
+      // Omit 'level' from the data to be inserted into the database
+      const { level, ...restOfData } = newMaterialData;
 
       const materialToInsert = {
-          ...newMaterialData,
+          ...restOfData,
           department: user.department,
           upload_date: new Date().toISOString().split('T')[0],
           file_path: filePath,
@@ -113,6 +135,7 @@ export class MaterialsService {
       }
       
       const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(data.file_path);
+      this.materialsPromise = null; // Invalidate cache
       return { ...data, file_url: publicUrl } as Material;
 
     } catch (error: any) {

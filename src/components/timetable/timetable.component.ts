@@ -26,6 +26,8 @@ export class TimetableComponent implements OnInit {
   selectedDepartment = signal<string>('');
   selectedCourse = signal<string>('');
   selectedLocation = signal<string>('');
+  selectedLevel = signal<string>('');
+  levels = [100, 200, 300, 400, 500, 600];
 
   // Delete modal state
   isDeleteModalOpen = signal(false);
@@ -34,11 +36,12 @@ export class TimetableComponent implements OnInit {
   // Edit modal state
   isEditModalOpen = signal(false);
   entryToEdit = signal<TimetableEntry | null>(null);
-  editableEntry: Omit<TimetableEntry, 'id' | 'department'> = {
+  editableEntry: Partial<Omit<TimetableEntry, 'id' | 'department'>> = {
     course: '',
     time: '',
     location: '',
     day: 'Monday',
+    level: null
   };
 
   newEntry: Omit<TimetableEntry, 'id' | 'department'> = {
@@ -46,6 +49,7 @@ export class TimetableComponent implements OnInit {
     time: '',
     location: '',
     day: 'Monday',
+    level: null,
   };
   departmentForNewEntry = signal('');
 
@@ -61,13 +65,14 @@ export class TimetableComponent implements OnInit {
     return [...new Set(allLocations)].sort();
   });
 
-  isAnyFilterActive = computed(() => this.selectedDepartment() !== '' || this.selectedCourse() !== '' || this.selectedLocation() !== '');
+  isAnyFilterActive = computed(() => this.selectedDepartment() !== '' || this.selectedCourse() !== '' || this.selectedLocation() !== '' || this.selectedLevel() !== '');
 
   filteredTimetable = computed(() => {
     let filtered = this.timetable();
     const course = this.selectedCourse();
     const location = this.selectedLocation();
     const dept = this.selectedDepartment();
+    const level = this.selectedLevel();
 
     if (this.isSuperAdmin && dept) {
       filtered = filtered.filter(entry => entry.department === dept);
@@ -77,6 +82,9 @@ export class TimetableComponent implements OnInit {
     }
     if (location) {
       filtered = filtered.filter(entry => entry.location === location);
+    }
+    if (level) {
+      filtered = filtered.filter(entry => entry.level === +level || !entry.level);
     }
 
     // Group by day for easier rendering
@@ -101,6 +109,11 @@ export class TimetableComponent implements OnInit {
     if (this.isSuperAdmin) {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
+    } else {
+        const userLevel = this.authService.currentUser()?.level;
+        if(userLevel) {
+            this.selectedLevel.set(userLevel.toString());
+        }
     }
   }
 
@@ -128,7 +141,7 @@ export class TimetableComponent implements OnInit {
       this.timetable.update(entries => [...entries, addedEntry]);
       this.notificationService.show('Entry added successfully!', 'success');
       // Reset form
-      this.newEntry = { course: '', time: '', location: '', day: 'Monday' };
+      this.newEntry = { course: '', time: '', location: '', day: 'Monday', level: null };
       if (this.isSuperAdmin) {
         this.departmentForNewEntry.set('');
       }
@@ -155,16 +168,22 @@ export class TimetableComponent implements OnInit {
     this.selectedLocation.set((event.target as HTMLSelectElement).value);
   }
 
+  onLevelChange(event: Event) {
+    this.selectedLevel.set((event.target as HTMLSelectElement).value);
+  }
+
   clearFilters() {
     this.selectedDepartment.set('');
     this.selectedCourse.set('');
     this.selectedLocation.set('');
+    this.selectedLevel.set('');
     // Need to reset the dropdowns manually if they are not bound with ngModel
     if (this.isSuperAdmin) {
       (document.getElementById('departmentFilter') as HTMLSelectElement).value = '';
     }
     (document.getElementById('courseFilter') as HTMLSelectElement).value = '';
     (document.getElementById('locationFilter') as HTMLSelectElement).value = '';
+    (document.getElementById('levelFilter') as HTMLSelectElement).value = '';
   }
 
   // --- Delete Modal Methods ---
@@ -194,7 +213,8 @@ export class TimetableComponent implements OnInit {
       course: entry.course,
       time: entry.time,
       location: entry.location,
-      day: entry.day
+      day: entry.day,
+      level: entry.level
     };
     this.isEditModalOpen.set(true);
   }

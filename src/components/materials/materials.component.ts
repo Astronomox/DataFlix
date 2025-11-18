@@ -22,13 +22,16 @@ export class MaterialsComponent implements OnInit {
   isLoading = signal(true);
   searchTerm = signal('');
   selectedDepartment = signal('');
+  selectedLevel = signal('');
   allDepartments = signal<string[]>([]);
+  levels = [100, 200, 300, 400, 500, 600];
 
   // Upload modal state
   isUploadModalOpen = signal(false);
   fileToUpload = signal<File | null>(null);
   newMaterialTitle = signal('');
   newMaterialCourse = signal('');
+  newMaterialLevel = signal(100);
 
   // Delete modal state
   isDeleteModalOpen = signal(false);
@@ -39,10 +42,15 @@ export class MaterialsComponent implements OnInit {
   filteredMaterials = computed(() => {
     const term = this.searchTerm().toLowerCase();
     const dept = this.selectedDepartment();
+    const level = this.selectedLevel();
     let materials = this.allMaterials();
 
     if (this.isSuperAdmin && dept) {
       materials = materials.filter(m => m.department === dept);
+    }
+    
+    if (level) {
+      materials = materials.filter(m => m.level === +level);
     }
 
     if (!term) {
@@ -60,6 +68,11 @@ export class MaterialsComponent implements OnInit {
     if (this.isSuperAdmin) {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
+    } else {
+      const userLevel = this.authService.currentUser()?.level;
+      if (userLevel) {
+        this.selectedLevel.set(userLevel.toString());
+      }
     }
   }
 
@@ -73,6 +86,10 @@ export class MaterialsComponent implements OnInit {
 
   onDepartmentChange(event: Event) {
     this.selectedDepartment.set((event.target as HTMLSelectElement).value);
+  }
+
+  onLevelChange(event: Event) {
+    this.selectedLevel.set((event.target as HTMLSelectElement).value);
   }
 
   onSearch(event: Event) {
@@ -97,6 +114,7 @@ export class MaterialsComponent implements OnInit {
     this.fileToUpload.set(null);
     this.newMaterialTitle.set('');
     this.newMaterialCourse.set('');
+    this.newMaterialLevel.set(100);
   }
 
   async confirmUpload() {
@@ -118,7 +136,8 @@ export class MaterialsComponent implements OnInit {
       title: this.newMaterialTitle(),
       course: this.newMaterialCourse(),
       type: fileExtension as any,
-      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      level: this.newMaterialLevel()
     };
 
     const uploadedMaterial = await this.materialsService.uploadMaterial(newMaterialData, file);

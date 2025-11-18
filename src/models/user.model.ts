@@ -14,4 +14,5 @@ export interface User {
   photourl?: string;
   birthday?: string;
   phone?: string;
+  level: number;
 }

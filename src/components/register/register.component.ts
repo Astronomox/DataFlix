@@ -89,6 +89,21 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
             </div>
 
             <div class="mb-4">
+              <label for="level" class="block text-sm font-medium text-gray-200 mb-2">Academic Level</label>
+              <div class="relative">
+                <select id="level" name="level" [(ngModel)]="level" required
+                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-white/50 focus:outline-none transition appearance-none text-gray-300">
+                  @for(level of levels; track level) {
+                    <option [value]="level" class="text-black bg-white">{{ level }} Level</option>
+                  }
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-300">
+                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
               <label for="password" class="block text-sm font-medium text-gray-200 mb-2">Password</label>
               <div class="relative">
                 <input [type]="passwordVisible() ? 'text' : 'password'" id="password" name="password" [(ngModel)]="password" required
@@ -160,6 +175,7 @@ export class RegisterComponent {
   email = '';
   password = '';
   department = '';
+  level = 100;
   role: UserRole = UserRole.Student;
   secretCode = '';
   isLoading = signal(false);
@@ -168,6 +184,7 @@ export class RegisterComponent {
 
   faculties: Faculty[] = UNILAG_FACULTIES;
   selectedFaculty = signal<Faculty | null>(null);
+  levels = [100, 200, 300, 400, 500, 600];
 
   // Expose UserRole enum to the template
   UserRole = UserRole;
@@ -191,7 +208,7 @@ export class RegisterComponent {
     if (!this.email || !this.password || !this.name || !this.department) return;
     this.isLoading.set(true);
     
-    this.authService.register(this.name, this.email, this.password, this.department, this.role, this.secretCode)
+    this.authService.register(this.name, this.email, this.password, this.department, this.role, this.level, this.secretCode)
       .finally(() => {
         this.isLoading.set(false);
       });
