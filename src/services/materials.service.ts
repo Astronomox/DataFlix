@@ -97,14 +97,16 @@ export class MaterialsService {
     }
   }
 
-  async uploadMaterial(newMaterialData: Omit<Material, 'id' | 'upload_date' | 'file_path' | 'file_url' | 'department'>, file: File): Promise<Material | null> {
+  async uploadMaterial(newMaterialData: Omit<Material, 'id' | 'upload_date' | 'file_path' | 'file_url' | 'department'>, file: File, department?: string): Promise<Material | null> {
     const user = this.authService.currentUser();
-    if (!user?.department) {
-      this.notificationService.show('Could not determine your department to upload material.', 'error');
+    const targetDepartment = this.authService.isSuperAdmin() && department ? department : user?.department;
+
+    if (!targetDepartment) {
+      this.notificationService.show('Could not determine department for material upload.', 'error');
       return null;
     }
     
-    const filePath = `${user.department.replace(/\s+/g, '_')}/${newMaterialData.course.replace(/\s+/g, '_')}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const filePath = `${targetDepartment.replace(/\s+/g, '_')}/${newMaterialData.course.replace(/\s+/g, '_')}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     
     try {
       const { error: uploadError } = await supabase.storage
@@ -118,7 +120,7 @@ export class MaterialsService {
 
       const materialToInsert = {
           ...restOfData,
-          department: user.department,
+          department: targetDepartment,
           upload_date: new Date().toISOString().split('T')[0],
           file_path: filePath,
       };

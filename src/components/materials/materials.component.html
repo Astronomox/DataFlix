@@ -181,6 +181,21 @@
       <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">File: <span class="font-semibold">{{ fileToUpload()?.name }}</span></p>
       
       <form (ngSubmit)="confirmUpload()" #uploadForm="ngForm" class="space-y-4">
+        @if (isSuperAdmin) {
+          <div>
+            <label for="materialDepartment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
+            <select id="materialDepartment" name="department" 
+              [ngModel]="newMaterialDepartment()" 
+              (ngModelChange)="newMaterialDepartment.set($event)" 
+              required 
+              class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+              <option value="" disabled>Select a department</option>
+              @for(dept of allDepartments(); track dept) {
+                <option [value]="dept">{{dept}}</option>
+              }
+            </select>
+          </div>
+        }
         <div>
           <label for="materialTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
           <input type="text" id="materialTitle" name="title" [ngModel]="newMaterialTitle()" (ngModelChange)="newMaterialTitle.set($event)" required

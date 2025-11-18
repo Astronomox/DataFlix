@@ -32,6 +32,7 @@ export class MaterialsComponent implements OnInit {
   newMaterialTitle = signal('');
   newMaterialCourse = signal('');
   newMaterialLevel = signal(100);
+  newMaterialDepartment = signal('');
 
   // Delete modal state
   isDeleteModalOpen = signal(false);
@@ -104,6 +105,7 @@ export class MaterialsComponent implements OnInit {
       this.fileToUpload.set(file);
       this.newMaterialTitle.set(file.name.replace(/\.[^/.]+$/, ""));
       this.newMaterialCourse.set('');
+      this.newMaterialDepartment.set('');
       this.isUploadModalOpen.set(true);
       input.value = ''; // Reset file input
     }
@@ -115,12 +117,18 @@ export class MaterialsComponent implements OnInit {
     this.newMaterialTitle.set('');
     this.newMaterialCourse.set('');
     this.newMaterialLevel.set(100);
+    this.newMaterialDepartment.set('');
   }
 
   async confirmUpload() {
     const file = this.fileToUpload();
     if (!file || !this.newMaterialTitle() || !this.newMaterialCourse()) {
       this.notificationService.show('Title and Course are required.', 'warning');
+      return;
+    }
+
+    if (this.isSuperAdmin && !this.newMaterialDepartment()) {
+      this.notificationService.show('As Super Admin, you must select a department.', 'warning');
       return;
     }
     
@@ -140,7 +148,8 @@ export class MaterialsComponent implements OnInit {
       level: this.newMaterialLevel()
     };
 
-    const uploadedMaterial = await this.materialsService.uploadMaterial(newMaterialData, file);
+    const department = this.isSuperAdmin ? this.newMaterialDepartment() : undefined;
+    const uploadedMaterial = await this.materialsService.uploadMaterial(newMaterialData, file, department);
     
     if (uploadedMaterial) {
       this.allMaterials.update(m => [uploadedMaterial, ...m]);
