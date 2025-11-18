@@ -66,7 +66,7 @@ export class AnnouncementsService {
     return this.announcementsPromise;
   }
   
-  async createAnnouncement(title: string, content: string, author: string, department?: string, level?: number | ''): Promise<Announcement | null> {
+  async createAnnouncement(title: string, content: string, author: string, department?: string, level?: number | null): Promise<Announcement | null> {
     const user = this.authService.currentUser();
     const targetDepartment = department || user?.department;
 
@@ -76,14 +76,17 @@ export class AnnouncementsService {
     }
 
     try {
-      const newAnnouncementData = {
+      const newAnnouncementData: any = {
         title,
         content,
         author,
         date: new Date().toISOString(),
         department: targetDepartment,
-        level: level || null
       };
+
+      if (level) {
+        newAnnouncementData.level = level;
+      }
       
       const { data, error } = await supabase
           .from('announcements')
@@ -102,7 +105,7 @@ export class AnnouncementsService {
     }
   }
 
-  async updateAnnouncement(id: string, updates: { title: string, content: string }): Promise<Announcement | null> {
+  async updateAnnouncement(id: string, updates: { title: string, content: string, level?: number | null }): Promise<Announcement | null> {
     try {
       const { data, error } = await supabase
         .from('announcements')

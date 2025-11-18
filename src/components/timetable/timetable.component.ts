@@ -24,10 +24,9 @@ export class TimetableComponent implements OnInit {
   
   allDepartments = signal<string[]>([]);
   selectedDepartment = signal<string>('');
+  selectedLevel = signal<number | null>(null);
   selectedCourse = signal<string>('');
   selectedLocation = signal<string>('');
-  selectedLevel = signal<string>('');
-  levels = [100, 200, 300, 400, 500, 600];
 
   // Delete modal state
   isDeleteModalOpen = signal(false);
@@ -41,7 +40,7 @@ export class TimetableComponent implements OnInit {
     time: '',
     location: '',
     day: 'Monday',
-    level: null
+    level: null,
   };
 
   newEntry: Omit<TimetableEntry, 'id' | 'department'> = {
@@ -65,7 +64,7 @@ export class TimetableComponent implements OnInit {
     return [...new Set(allLocations)].sort();
   });
 
-  isAnyFilterActive = computed(() => this.selectedDepartment() !== '' || this.selectedCourse() !== '' || this.selectedLocation() !== '' || this.selectedLevel() !== '');
+  isAnyFilterActive = computed(() => this.selectedDepartment() !== '' || this.selectedLevel() !== null || this.selectedCourse() !== '' || this.selectedLocation() !== '');
 
   filteredTimetable = computed(() => {
     let filtered = this.timetable();
@@ -77,14 +76,14 @@ export class TimetableComponent implements OnInit {
     if (this.isSuperAdmin && dept) {
       filtered = filtered.filter(entry => entry.department === dept);
     }
+    if (level) {
+      filtered = filtered.filter(entry => entry.level === level || !entry.level);
+    }
     if (course) {
       filtered = filtered.filter(entry => entry.course === course);
     }
     if (location) {
       filtered = filtered.filter(entry => entry.location === location);
-    }
-    if (level) {
-      filtered = filtered.filter(entry => entry.level === +level || !entry.level);
     }
 
     // Group by day for easier rendering
@@ -110,11 +109,10 @@ export class TimetableComponent implements OnInit {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
     } else {
-        const userLevel = this.authService.currentUser()?.level;
-        if(userLevel) {
-            this.selectedLevel.set(userLevel.toString());
-        }
+      // Default filter to student's level
+      this.selectedLevel.set(this.authService.currentUser()?.level ?? null);
     }
+    this.newEntry.level = this.authService.currentUser()?.level ?? 100;
   }
 
   async loadTimetable() {
@@ -141,7 +139,8 @@ export class TimetableComponent implements OnInit {
       this.timetable.update(entries => [...entries, addedEntry]);
       this.notificationService.show('Entry added successfully!', 'success');
       // Reset form
-      this.newEntry = { course: '', time: '', location: '', day: 'Monday', level: null };
+      const defaultLevel = this.authService.currentUser()?.level ?? 100;
+      this.newEntry = { course: '', time: '', location: '', day: 'Monday', level: defaultLevel };
       if (this.isSuperAdmin) {
         this.departmentForNewEntry.set('');
       }
@@ -160,6 +159,11 @@ export class TimetableComponent implements OnInit {
     this.selectedDepartment.set((event.target as HTMLSelectElement).value);
   }
 
+  onLevelChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedLevel.set(value ? Number(value) : null);
+  }
+
   onCourseChange(event: Event) {
     this.selectedCourse.set((event.target as HTMLSelectElement).value);
   }
@@ -168,22 +172,18 @@ export class TimetableComponent implements OnInit {
     this.selectedLocation.set((event.target as HTMLSelectElement).value);
   }
 
-  onLevelChange(event: Event) {
-    this.selectedLevel.set((event.target as HTMLSelectElement).value);
-  }
-
   clearFilters() {
     this.selectedDepartment.set('');
+    this.selectedLevel.set(this.authService.isSuperAdmin() ? null : (this.authService.currentUser()?.level ?? null));
     this.selectedCourse.set('');
     this.selectedLocation.set('');
-    this.selectedLevel.set('');
     // Need to reset the dropdowns manually if they are not bound with ngModel
     if (this.isSuperAdmin) {
       (document.getElementById('departmentFilter') as HTMLSelectElement).value = '';
     }
+    (document.getElementById('levelFilter') as HTMLSelectElement).value = this.selectedLevel()?.toString() ?? '';
     (document.getElementById('courseFilter') as HTMLSelectElement).value = '';
     (document.getElementById('locationFilter') as HTMLSelectElement).value = '';
-    (document.getElementById('levelFilter') as HTMLSelectElement).value = '';
   }
 
   // --- Delete Modal Methods ---
@@ -214,7 +214,7 @@ export class TimetableComponent implements OnInit {
       time: entry.time,
       location: entry.location,
       day: entry.day,
-      level: entry.level
+      level: entry.level,
     };
     this.isEditModalOpen.set(true);
   }

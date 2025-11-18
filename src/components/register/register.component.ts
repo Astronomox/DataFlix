@@ -88,18 +88,20 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
               </div>
             </div>
 
-            <div class="mb-4">
-              <label for="level" class="block text-sm font-medium text-gray-200 mb-2">Academic Level</label>
+             <div class="mb-4">
+              <label for="level" class="block text-sm font-medium text-gray-200 mb-2">Level</label>
               <div class="relative">
-                <select id="level" name="level" [(ngModel)]="level" required
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-white/50 focus:outline-none transition appearance-none text-gray-300">
-                  @for(level of levels; track level) {
-                    <option [value]="level" class="text-black bg-white">{{ level }} Level</option>
-                  }
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-300">
-                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
+                  <select id="level" name="level" [(ngModel)]="level" required class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-white/50 focus:outline-none transition appearance-none text-white">
+                      <option [value]="100" class="text-black bg-white">100 Level</option>
+                      <option [value]="200" class="text-black bg-white">200 Level</option>
+                      <option [value]="300" class="text-black bg-white">300 Level</option>
+                      <option [value]="400" class="text-black bg-white">400 Level</option>
+                      <option [value]="500" class="text-black bg-white">500 Level</option>
+                      <option [value]="600" class="text-black bg-white">600 Level</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-300">
+                      <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                  </div>
               </div>
             </div>
 
@@ -114,7 +116,7 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                   } @else {
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 .847 0 1.67.11 2.458.315M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 3.464V12a9.956 9.956 0 00-5.464-1.536M3 3l18 18" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064 7 9.542-7 .847 0 1.67 .11 2.458 .315M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 3.464V12a9.956 9.956 0 00-5.464-1.536M3 3l18 18" />
                     </svg>
                   }
                 </button>
@@ -133,14 +135,15 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                     } @else {
                       <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 .847 0 1.67.11 2.458.315M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 3.464V12a9.956 9.956 0 00-5.464-1.536M3 3l18 18" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064 7 9.542-7 .847 0 1.67 .11 2.458 .315M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 3.464V12a9.956 9.956 0 00-5.464-1.536M3 3l18 18" />
                       </svg>
                     }
                   </button>
                 </div>
               </div>
             } @else {
-              <div class="mb-6"></div>
+              <!-- This empty div is for spacing consistency when the admin secret code is not shown -->
+              <div class="mb-6 h-16 sm:h-auto"></div> 
             }
             
             <button type="submit" [disabled]="isLoading() || registerForm.invalid"
@@ -184,8 +187,7 @@ export class RegisterComponent {
 
   faculties: Faculty[] = UNILAG_FACULTIES;
   selectedFaculty = signal<Faculty | null>(null);
-  levels = [100, 200, 300, 400, 500, 600];
-
+  
   // Expose UserRole enum to the template
   UserRole = UserRole;
 

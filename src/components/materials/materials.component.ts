@@ -22,17 +22,16 @@ export class MaterialsComponent implements OnInit {
   isLoading = signal(true);
   searchTerm = signal('');
   selectedDepartment = signal('');
-  selectedLevel = signal('');
+  selectedLevel = signal<number | null>(null);
   allDepartments = signal<string[]>([]);
-  levels = [100, 200, 300, 400, 500, 600];
 
   // Upload modal state
   isUploadModalOpen = signal(false);
   fileToUpload = signal<File | null>(null);
   newMaterialTitle = signal('');
   newMaterialCourse = signal('');
-  newMaterialLevel = signal(100);
   newMaterialDepartment = signal('');
+  newMaterialLevel = signal<number | null>(null);
 
   // Delete modal state
   isDeleteModalOpen = signal(false);
@@ -51,7 +50,7 @@ export class MaterialsComponent implements OnInit {
     }
     
     if (level) {
-      materials = materials.filter(m => m.level === +level);
+      materials = materials.filter(m => m.level === level);
     }
 
     if (!term) {
@@ -70,10 +69,8 @@ export class MaterialsComponent implements OnInit {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
     } else {
-      const userLevel = this.authService.currentUser()?.level;
-      if (userLevel) {
-        this.selectedLevel.set(userLevel.toString());
-      }
+      // Default filter to student's level
+      this.selectedLevel.set(this.authService.currentUser()?.level ?? null);
     }
   }
 
@@ -88,9 +85,10 @@ export class MaterialsComponent implements OnInit {
   onDepartmentChange(event: Event) {
     this.selectedDepartment.set((event.target as HTMLSelectElement).value);
   }
-
+  
   onLevelChange(event: Event) {
-    this.selectedLevel.set((event.target as HTMLSelectElement).value);
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedLevel.set(value ? Number(value) : null);
   }
 
   onSearch(event: Event) {
@@ -106,6 +104,7 @@ export class MaterialsComponent implements OnInit {
       this.newMaterialTitle.set(file.name.replace(/\.[^/.]+$/, ""));
       this.newMaterialCourse.set('');
       this.newMaterialDepartment.set('');
+      this.newMaterialLevel.set(this.authService.currentUser()?.level ?? 100);
       this.isUploadModalOpen.set(true);
       input.value = ''; // Reset file input
     }
@@ -116,14 +115,14 @@ export class MaterialsComponent implements OnInit {
     this.fileToUpload.set(null);
     this.newMaterialTitle.set('');
     this.newMaterialCourse.set('');
-    this.newMaterialLevel.set(100);
     this.newMaterialDepartment.set('');
+    this.newMaterialLevel.set(null);
   }
 
   async confirmUpload() {
     const file = this.fileToUpload();
-    if (!file || !this.newMaterialTitle() || !this.newMaterialCourse()) {
-      this.notificationService.show('Title and Course are required.', 'warning');
+    if (!file || !this.newMaterialTitle() || !this.newMaterialCourse() || !this.newMaterialLevel()) {
+      this.notificationService.show('Title, Course, and Level are required.', 'warning');
       return;
     }
 
@@ -140,12 +139,12 @@ export class MaterialsComponent implements OnInit {
       return;
     }
 
-    const newMaterialData = {
+    const newMaterialData: any = {
       title: this.newMaterialTitle(),
       course: this.newMaterialCourse(),
+      level: this.newMaterialLevel(),
       type: fileExtension as any,
       size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      level: this.newMaterialLevel()
     };
 
     const department = this.isSuperAdmin ? this.newMaterialDepartment() : undefined;

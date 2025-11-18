@@ -66,7 +66,7 @@ export class AuthService {
       if (data) {
         const userWithFaculty: User = {
             ...data,
-            level: data.level || 100, // Ensure backward compatibility for old users
+            level: data.level || 100, // Default for legacy users
             faculty: this.findFacultyForDepartment(data.department)
         };
         this.currentUser.set(userWithFaculty);

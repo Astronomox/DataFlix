@@ -22,7 +22,6 @@ export class ProfileComponent {
   
   faculties: Faculty[] = UNILAG_FACULTIES;
   selectedFaculty = signal<Faculty | null>(null);
-  levels = [100, 200, 300, 400, 500, 600];
 
   // Form model for editing
   editableUser = {
@@ -30,7 +29,7 @@ export class ProfileComponent {
     department: '',
     birthday: '',
     phone: '',
-    level: 100
+    level: 100,
   };
 
   userAvatarUrl = computed(() => {

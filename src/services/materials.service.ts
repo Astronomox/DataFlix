@@ -115,11 +115,8 @@ export class MaterialsService {
 
       if (uploadError) throw uploadError;
       
-      // Omit 'level' from the data to be inserted into the database
-      const { level, ...restOfData } = newMaterialData;
-
       const materialToInsert = {
-          ...restOfData,
+          ...newMaterialData,
           department: targetDepartment,
           upload_date: new Date().toISOString().split('T')[0],
           file_path: filePath,

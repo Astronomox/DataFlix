@@ -81,7 +81,6 @@ export class TimetableService {
       const dataToInsert = {
         ...entryData,
         department: targetDepartment,
-        level: entryData.level || null,
       };
 
       const { data, error } = await supabase
@@ -104,10 +103,7 @@ export class TimetableService {
   async updateEntry(id: string, entryData: Partial<Omit<TimetableEntry, 'id' | 'department'>>): Promise<TimetableEntry | null> {
     try {
       const dataToUpdate = { ...entryData };
-      if (dataToUpdate.level === undefined) {
-        dataToUpdate.level = null;
-      }
-
+      
       const { data, error } = await supabase
         .from('timetable')
         .update(dataToUpdate)

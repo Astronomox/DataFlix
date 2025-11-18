@@ -16,20 +16,23 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
           <p class="mt-1 text-gray-600 dark:text-gray-400">Latest news and updates from the department.</p>
         </div>
         <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
-          <div class="relative flex-grow min-w-40">
-            <select 
-              (change)="onLevelChange($event)"
-              [value]="selectedLevel()"
-              class="w-full pl-4 pr-10 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
-              <option value="">All Levels</option>
-              @for(level of levels; track level) {
-                <option [value]="level">{{level}} Level</option>
-              }
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+          <div class="relative w-full md:w-48">
+              <select 
+                (change)="onLevelChange($event)"
+                [ngModel]="selectedLevel()"
+                class="w-full pl-4 pr-10 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
+                <option [ngValue]="null">All Levels</option>
+                <option [value]="100">100 Level</option>
+                <option [value]="200">200 Level</option>
+                <option [value]="300">300 Level</option>
+                <option [value]="400">400 Level</option>
+                <option [value]="500">500 Level</option>
+                <option [value]="600">600 Level</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
             </div>
-          </div>
           @if (isSuperAdmin) {
             <div class="relative w-full md:w-64">
               <select 
@@ -52,42 +55,43 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
         <div class="mb-8 p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
           <h3 class="text-lg font-bold mb-4">Post a New Announcement</h3>
           <form (ngSubmit)="postAnnouncement()" #announcementForm="ngForm" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              @if (isSuperAdmin) {
-                <div>
-                  <label for="departmentSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Post to Department</label>
-                  <div class="relative">
-                    <select 
-                      id="departmentSelect"
-                      name="departmentForNewAnnouncement"
-                      [(ngModel)]="departmentForNewAnnouncement"
-                      required
-                      class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
-                      <option value="" disabled>Select a department</option>
-                      @for(dept of allDepartments(); track dept) {
-                        <option [value]="dept" class="text-black dark:text-white bg-white dark:bg-gray-800">{{dept}}</option>
-                      }
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-                      <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                    </div>
+            @if (isSuperAdmin) {
+              <div>
+                <label for="departmentSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Post to Department</label>
+                <div class="relative">
+                  <select 
+                    id="departmentSelect"
+                    name="departmentForNewAnnouncement"
+                    [(ngModel)]="departmentForNewAnnouncement"
+                    required
+                    class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
+                    <option value="" disabled>Select a department</option>
+                    @for(dept of allDepartments(); track dept) {
+                      <option [value]="dept" class="text-black dark:text-white bg-white dark:bg-gray-800">{{dept}}</option>
+                    }
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                   </div>
                 </div>
-              }
-              <div>
-                 <label for="levelSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Level (Optional)</label>
+              </div>
+            }
+             <div>
+                <label for="levelSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Level (Optional)</label>
                  <select 
                     id="levelSelect"
                     name="levelForNewAnnouncement"
                     [(ngModel)]="newAnnouncement.level"
                     class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    <option value="">All Levels</option>
-                    @for(level of levels; track level) {
-                      <option [value]="level">{{level}} Level</option>
-                    }
-                  </select>
+                    <option [ngValue]="null">All Levels</option>
+                    <option [ngValue]="100">100 Level</option>
+                    <option [ngValue]="200">200 Level</option>
+                    <option [ngValue]="300">300 Level</option>
+                    <option [ngValue]="400">400 Level</option>
+                    <option [ngValue]="500">500 Level</option>
+                    <option [ngValue]="600">600 Level</option>
+                 </select>
               </div>
-            </div>
             <input type="text" placeholder="Title" [(ngModel)]="newAnnouncement.title" name="title" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
             <textarea placeholder="Content..." [(ngModel)]="newAnnouncement.content" name="content" required rows="4" class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
             <button type="submit" [disabled]="announcementForm.invalid" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition disabled:opacity-50">Post Announcement</button>
@@ -107,17 +111,15 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
           @for(announcement of filteredAnnouncements(); track announcement.id) {
             <div class="relative bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-6">
               <h2 class="text-xl font-bold text-gray-800 dark:text-white">{{ announcement.title }}</h2>
-              <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2 flex-wrap">
+              <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2 flex-wrap gap-x-2">
                 <span>Posted by {{ announcement.author }} on {{ announcement.date | date: 'mediumDate' }}</span>
-                @if(isSuperAdmin) {
-                  <span class="mx-2">|</span>
-                  <span class="font-semibold text-purple-600 dark:text-purple-400">{{ announcement.department }}</span>
-                }
                 @if(announcement.level) {
-                   <span class="mx-2">|</span>
-                   <span class="px-2 py-0.5 font-semibold leading-tight text-green-700 bg-green-100 rounded-full dark:bg-green-700 dark:text-green-100 text-xs">
+                  <span class="inline-block bg-green-200 text-green-800 font-semibold px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
                     {{ announcement.level }} Level
                   </span>
+                }
+                @if(isSuperAdmin) {
+                  <span class="font-semibold text-purple-600 dark:text-purple-400">| {{ announcement.department }}</span>
                 }
               </div>
               <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ announcement.content }}</p>
@@ -149,6 +151,19 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-lg" (click)="$event.stopPropagation()">
           <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">Edit Announcement</h3>
           <form (ngSubmit)="confirmEdit()" #editForm="ngForm" class="space-y-4">
+            <div>
+              <label for="editLevel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Level</label>
+              <select id="editLevel" name="editLevel" [(ngModel)]="editableAnnouncement.level"
+                      class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                <option [ngValue]="null">All Levels</option>
+                <option [ngValue]="100">100 Level</option>
+                <option [ngValue]="200">200 Level</option>
+                <option [ngValue]="300">300 Level</option>
+                <option [ngValue]="400">400 Level</option>
+                <option [ngValue]="500">500 Level</option>
+                <option [ngValue]="600">600 Level</option>
+              </select>
+            </div>
             <div>
               <label for="editTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
               <input type="text" id="editTitle" name="editTitle" [(ngModel)]="editableAnnouncement.title" required
@@ -218,8 +233,7 @@ export class AnnouncementsComponent implements OnInit {
   private announcements = signal<Announcement[]>([]);
   allDepartments = signal<string[]>([]);
   selectedDepartment = signal('');
-  selectedLevel = signal('');
-  levels = [100, 200, 300, 400, 500, 600];
+  selectedLevel = signal<number | null>(null);
 
   // Delete modal state
   isDeleteModalOpen = signal(false);
@@ -228,12 +242,12 @@ export class AnnouncementsComponent implements OnInit {
   // Edit modal state
   isEditModalOpen = signal(false);
   announcementToEdit = signal<Announcement | null>(null);
-  editableAnnouncement = { title: '', content: '' };
+  editableAnnouncement = { title: '', content: '', level: null as number | null };
 
   newAnnouncement = {
     title: '',
     content: '',
-    level: '' as number | ''
+    level: null as number | null,
   };
   departmentForNewAnnouncement = '';
 
@@ -247,8 +261,8 @@ export class AnnouncementsComponent implements OnInit {
     }
 
     if (level) {
-      // Show announcements for the specific level OR announcements with no level set (for everyone)
-      announcements = announcements.filter(a => a.level === +level || !a.level);
+      // Show announcements for the specific level OR announcements for all levels
+      announcements = announcements.filter(a => a.level === level || !a.level);
     }
     
     return announcements;
@@ -260,10 +274,8 @@ export class AnnouncementsComponent implements OnInit {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
     } else {
-      const userLevel = this.authService.currentUser()?.level;
-      if (userLevel) {
-        this.selectedLevel.set(userLevel.toString());
-      }
+      // Default filter to student's level
+      this.selectedLevel.set(this.authService.currentUser()?.level ?? null);
     }
   }
 
@@ -280,7 +292,8 @@ export class AnnouncementsComponent implements OnInit {
   }
 
   onLevelChange(event: Event) {
-    this.selectedLevel.set((event.target as HTMLSelectElement).value);
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedLevel.set(value ? Number(value) : null);
   }
 
   postAnnouncement() {
@@ -299,7 +312,7 @@ export class AnnouncementsComponent implements OnInit {
           this.notificationService.show('Announcement posted!', 'success');
           this.newAnnouncement.title = '';
           this.newAnnouncement.content = '';
-          this.newAnnouncement.level = '';
+          this.newAnnouncement.level = null;
           if (this.isSuperAdmin) {
             this.departmentForNewAnnouncement = '';
           }
@@ -340,6 +353,7 @@ export class AnnouncementsComponent implements OnInit {
     this.announcementToEdit.set(announcement);
     this.editableAnnouncement.title = announcement.title;
     this.editableAnnouncement.content = announcement.content;
+    this.editableAnnouncement.level = announcement.level ?? null;
     this.isEditModalOpen.set(true);
   }
 
@@ -357,7 +371,8 @@ export class AnnouncementsComponent implements OnInit {
     
     const updatedAnnouncement = await this.announcementsService.updateAnnouncement(announcement.id, {
         title: this.editableAnnouncement.title,
-        content: this.editableAnnouncement.content
+        content: this.editableAnnouncement.content,
+        level: this.editableAnnouncement.level,
     });
 
     if (updatedAnnouncement) {
