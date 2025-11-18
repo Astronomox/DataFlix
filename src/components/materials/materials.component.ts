@@ -80,10 +80,6 @@ export class MaterialsComponent implements OnInit {
     this.searchTerm.set(input.value);
   }
 
-  triggerFileInput() {
-    document.getElementById('file-upload-input')?.click();
-  }
-
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
