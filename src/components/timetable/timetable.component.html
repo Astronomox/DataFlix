@@ -53,7 +53,10 @@
               }
             </select>
         </div>
-        <button type="submit" [disabled]="entryForm.invalid" class="w-full bg-purple-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-purple-700 transition disabled:opacity-50">Add Entry</button>
+        <button type="submit" [disabled]="entryForm.invalid" class="w-full bg-purple-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-purple-700 transition disabled:opacity-50 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clip-rule="evenodd" /></svg>
+          <span>Add</span>
+        </button>
       </form>
     </div>
   }
@@ -122,14 +125,21 @@
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
       @for(day of weekdays; track day; let i = $index) {
-        <div class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-4 flex flex-col">
+        @let dayColor = ['border-blue-500', 'border-green-500', 'border-yellow-500', 'border-red-500', 'border-indigo-500'][i];
+        <div class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-4 flex flex-col border-t-4" [class]="dayColor">
           <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white">{{ day }}</h2>
           <div class="flex-grow space-y-3">
             @for(entry of filteredTimetable()[day]; track entry.id) {
-              <div class="relative bg-white/50 dark:bg-gray-700/50 rounded-lg p-3 group">
+              <div class="relative bg-white/50 dark:bg-gray-700/50 rounded-lg p-3 group hover:shadow-md transition-shadow">
                 <p class="font-bold text-gray-900 dark:text-gray-100">{{ entry.course }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-300">{{ entry.time }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ entry.location }}</p>
+                <div class="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
+                  <span>{{ entry.time }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                  <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.757.433.62.62 0 00.28.14l.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" /></svg>
+                  <span>{{ entry.location }}</span>
+                </div>
                 @if (entry.level) {
                   <p class="text-xs text-green-600 dark:text-green-400 mt-1 font-semibold">{{ entry.level }} Level</p>
                 }

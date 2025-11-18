@@ -1,7 +1,7 @@
 <div class="fixed top-5 right-5 z-50 flex flex-col items-end space-y-3">
   @for (notification of notifications(); track notification.id) {
     <div
-      class="flex items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white divide-x divide-gray-200 rounded-lg shadow-2xl dark:text-gray-400 dark:divide-gray-700 dark:bg-gray-800 transition-all duration-300 animate-fade-in-right"
+      class="flex items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white divide-x divide-gray-200 rounded-lg shadow-lg dark:text-gray-400 dark:divide-gray-700 dark:bg-gray-800 transition-all duration-300 animate-fade-in-right"
       role="alert"
     >
       <div class="flex-shrink-0 p-2 rounded-full" [ngClass]="getIconClasses(notification.type)">
