@@ -84,14 +84,14 @@
             <tbody>
               @for (material of filteredMaterials(); track material.id) {
                 <tr class="border-b dark:border-gray-700 hover:bg-gray-50/30 dark:hover:bg-gray-600/30 transition-colors">
-                  <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white flex items-center gap-2 max-w-sm break-words">
-                    @if (material.type === 'pdf') { <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 0a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H4zm5 9a1 1 0 00-1 1v2a1 1 0 102 0v-2a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> }
-                    @if (material.type === 'doc' || material.type === 'docx') { <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 0a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H4zm4 10.5a.5.5 0 000-1H6.5a.5.5 0 000 1H8zm-1.5 2a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5zm-2-4a.5.5 0 000-1H4.5a.5.5 0 000 1h1.5z" clip-rule="evenodd"></path></svg> }
-                    @if (material.type === 'ppt' || material.type === 'pptx' || material.type === 'odp') { <svg class="w-5 h-5 text-orange-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M4.632 3.533A2 2 0 016.577 2h6.846a2 2 0 011.945 1.533l1.976 8.234A3.489 3.489 0 0018 15.5a3.5 3.5 0 01-3.5 3.5H5.5A3.5 3.5 0 012 15.5a3.489 3.489 0 001.054-2.733l1.976-8.234z" /><path d="M12 14a2 2 0 100-4 2 2 0 000 4z" /></svg> }
-                    @if (material.type === 'zip') { <svg class="w-5 h-5 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-1 1v1H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2h-2V3a1 1 0 00-1-1H9zM8 6h4v2H8V6zm1-3v1h2V3H9z" clip-rule="evenodd"></path></svg> }
-                    @if (material.type === 'xls' || material.type === 'xlsx') { <svg class="w-5 h-5 text-green-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path d="M2 3a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1-1H3a1 1 0 01-1-1V3zm3 2a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1H5zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm4-8a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1H9zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm4-8a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1h-2zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2z" /> </svg> }
-                    @if (material.type === 'txt' || material.type === 'rtf' || material.type === 'odt') { <svg class="w-5 h-5 text-gray-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm3 5a1 1 0 011-1h6a1 1 0 110 2H8a1 1 0 01-1-1zm-1 4a1 1 0 100 2h6a1 1 0 100-2H6z" clip-rule="evenodd" /> </svg> }
-                    <span>{{ material.title }}</span>
+                  <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white flex items-center gap-2">
+                    @if (material.type === 'pdf') { <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 0a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H4zm5 9a1 1 0 00-1 1v2a1 1 0 102 0v-2a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> }
+                    @if (material.type === 'doc' || material.type === 'docx') { <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 0a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H4zm4 10.5a.5.5 0 000-1H6.5a.5.5 0 000 1H8zm-1.5 2a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5zm-2-4a.5.5 0 000-1H4.5a.5.5 0 000 1h1.5z" clip-rule="evenodd"></path></svg> }
+                    @if (material.type === 'ppt' || material.type === 'pptx' || material.type === 'odp') { <svg class="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M4.632 3.533A2 2 0 016.577 2h6.846a2 2 0 011.945 1.533l1.976 8.234A3.489 3.489 0 0018 15.5a3.5 3.5 0 01-3.5 3.5H5.5A3.5 3.5 0 012 15.5a3.489 3.489 0 001.054-2.733l1.976-8.234z" /><path d="M12 14a2 2 0 100-4 2 2 0 000 4z" /></svg> }
+                    @if (material.type === 'zip') { <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-1 1v1H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2h-2V3a1 1 0 00-1-1H9zM8 6h4v2H8V6zm1-3v1h2V3H9z" clip-rule="evenodd"></path></svg> }
+                    @if (material.type === 'xls' || material.type === 'xlsx') { <svg class="w-5 h-5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path d="M2 3a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1-1H3a1 1 0 01-1-1V3zm3 2a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1H5zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm4-8a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1H9zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm4-8a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1h-2zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2z" /> </svg> }
+                    @if (material.type === 'txt' || material.type === 'rtf' || material.type === 'odt') { <svg class="w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm3 5a1 1 0 011-1h6a1 1 0 110 2H8a1 1 0 01-1-1zm-1 4a1 1 0 100 2h6a1 1 0 100-2H6z" clip-rule="evenodd" /> </svg> }
+                    {{ material.title }}
                   </th>
                   <td class="px-6 py-4">{{ material.course }}</td>
                   <td class="px-6 py-4">{{ material.level }} Level</td>
@@ -125,7 +125,7 @@
                   @if (material.type === 'txt' || material.type === 'rtf' || material.type === 'odt') { <svg class="w-6 h-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm3 5a1 1 0 011-1h6a1 1 0 110 2H8a1 1 0 01-1-1zm-1 4a1 1 0 100 2h6a1 1 0 100-2H6z" clip-rule="evenodd" /> </svg> }
                 </div>
                 <div class="flex-grow">
-                  <h3 class="font-bold text-lg text-gray-900 dark:text-white break-words">{{ material.title }}</h3>
+                  <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate">{{ material.title }}</h3>
                   <div class="text-sm text-gray-600 dark:text-gray-300">
                     <span class="font-semibold">{{ material.course }}</span>
                     <span class="mx-1">·</span>
@@ -205,7 +205,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
             <input type="text" 
-              [value]="newMaterialLevel() + ' Level'" 
+              [value]="authService.currentUser()?.level + ' Level'" 
               disabled
               class="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed">
           </div>

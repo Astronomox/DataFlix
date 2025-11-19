@@ -4,8 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { MaterialsService, Material } from '../../services/materials.service';
-// FIX: Import `Faculty` type to resolve type inference issues.
-import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
+import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-materials',
@@ -14,10 +13,9 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MaterialsComponent implements OnInit {
-  // FIX: Add explicit types for injected services to prevent 'unknown' type errors.
-  authService: AuthService = inject(AuthService);
-  notificationService: NotificationService = inject(NotificationService);
-  materialsService: MaterialsService = inject(MaterialsService);
+  authService = inject(AuthService);
+  notificationService = inject(NotificationService);
+  materialsService = inject(MaterialsService);
   
   isAdmin = this.authService.isAdmin();
   isSuperAdmin = this.authService.isSuperAdmin();
@@ -68,8 +66,7 @@ export class MaterialsComponent implements OnInit {
   ngOnInit() {
     this.loadMaterials();
     if (this.isSuperAdmin) {
-      // FIX: Add explicit type to flatMap callback parameter to resolve 'unknown[]' type error.
-      const depts = UNILAG_FACULTIES.flatMap((f: Faculty) => f.courses);
+      const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
     } else {
       // Default filter to student's level
@@ -123,10 +120,22 @@ export class MaterialsComponent implements OnInit {
   }
 
   async confirmUpload() {
+    const user = this.authService.currentUser();
+    if (!user) return;
+
     const file = this.fileToUpload();
-    if (!file || !this.newMaterialTitle() || !this.newMaterialCourse() || !this.newMaterialLevel()) {
-      this.notificationService.show('Title, Course, and Level are required.', 'warning');
+    if (!file || !this.newMaterialTitle() || !this.newMaterialCourse()) {
+      this.notificationService.show('Title and Course are required.', 'warning');
       return;
+    }
+    
+    const levelForUpload = (this.isAdmin && !this.isSuperAdmin) 
+        ? user.level 
+        : this.newMaterialLevel();
+
+    if (!levelForUpload) {
+        this.notificationService.show('Level is required.', 'warning');
+        return;
     }
 
     if (this.isSuperAdmin && !this.newMaterialDepartment()) {
@@ -145,7 +154,7 @@ export class MaterialsComponent implements OnInit {
     const newMaterialData: any = {
       title: this.newMaterialTitle(),
       course: this.newMaterialCourse(),
-      level: this.newMaterialLevel(),
+      level: levelForUpload,
       type: fileExtension as any,
       size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
     };

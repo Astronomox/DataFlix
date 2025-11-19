@@ -105,17 +105,18 @@ export class TimetableComponent implements OnInit {
 
   ngOnInit() {
     this.loadTimetable();
+    const user = this.authService.currentUser();
     if (this.isSuperAdmin) {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
       this.newEntry.level = null; // Super Admin can post to all levels by default
     } else {
-      const userLevel = this.authService.currentUser()?.level ?? null;
+      const userLevel = user?.level ?? null;
       // Default filter to user's level
       this.selectedLevel.set(userLevel);
       // For basic admins, pre-fill and lock their level for new entries
       if (this.isAdmin) {
-          this.newEntry.level = userLevel ?? 100;
+          this.newEntry.level = user?.level ?? 100;
       }
     }
   }
@@ -128,6 +129,9 @@ export class TimetableComponent implements OnInit {
   }
 
   async addEntry() {
+    const user = this.authService.currentUser();
+    if (!user) return;
+
     if (!this.newEntry.course || !this.newEntry.time || !this.newEntry.location || !this.newEntry.day) {
         this.notificationService.show('All fields are required.', 'warning');
         return;
@@ -139,12 +143,17 @@ export class TimetableComponent implements OnInit {
       return;
     }
 
-    const addedEntry = await this.timetableService.addEntry(this.newEntry, department);
+    const entryData = { ...this.newEntry };
+    if (this.isAdmin && !this.isSuperAdmin) {
+      entryData.level = user.level;
+    }
+
+    const addedEntry = await this.timetableService.addEntry(entryData, department);
     if (addedEntry) {
       this.timetable.update(entries => [...entries, addedEntry]);
       this.notificationService.show('Entry added successfully!', 'success');
       // Reset form
-      const defaultLevel = (this.isAdmin && !this.isSuperAdmin) ? (this.authService.currentUser()?.level ?? 100) : null;
+      const defaultLevel = (this.isAdmin && !this.isSuperAdmin) ? user.level : null;
       this.newEntry = { course: '', time: '', location: '', day: 'Monday', level: defaultLevel };
       if (this.isSuperAdmin) {
         this.departmentForNewEntry.set('');
