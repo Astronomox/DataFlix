@@ -15,6 +15,7 @@
               <label for="newDepartment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
               <select id="newDepartment" [ngModel]="departmentForNewEntry()" (ngModelChange)="departmentForNewEntry.set($event)" name="department" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
                 <option value="" disabled>Select Department</option>
+                <option [ngValue]="null">All Departments</option>
                 @for (dept of allDepartments(); track dept) {
                   <option [value]="dept">{{ dept }}</option>
                 }
@@ -149,9 +150,11 @@
                 </div>
                 @if (entry.level) {
                   <p class="text-xs text-green-600 dark:text-green-400 mt-1 font-semibold">{{ entry.level }} Level</p>
+                } @else if (entry.level === null) {
+                  <p class="text-xs text-purple-500 dark:text-purple-400 mt-1 font-semibold">All Levels</p>
                 }
                 @if (isSuperAdmin) {
-                  <p class="text-xs text-purple-500 dark:text-purple-400 mt-1 font-semibold">{{ entry.department }}</p>
+                  <p class="text-xs text-purple-500 dark:text-purple-400 mt-1 font-semibold">{{ entry.department || 'All Departments' }}</p>
                 }
                 @if(isAdmin) {
                   <div class="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -190,18 +193,37 @@
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-lg" (click)="$event.stopPropagation()">
       <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">Edit Timetable Entry</h3>
       <form (ngSubmit)="confirmEdit()" #editEntryForm="ngForm" class="space-y-4">
+        @if (isSuperAdmin) {
+          <div>
+            <label for="editDepartment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
+            <select id="editDepartment" name="department" [(ngModel)]="editableEntry.department" required
+                    class="w-full bg-gray-100 dark:bg-gray-700 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+              <option [ngValue]="null">All Departments</option>
+              @for (dept of allDepartments(); track dept) {
+                <option [value]="dept">{{ dept }}</option>
+              }
+            </select>
+          </div>
+        }
         <div>
           <label for="editLevel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level</label>
-          <select id="editLevel" [(ngModel)]="editableEntry.level" name="level"
-                  class="w-full bg-gray-100 dark:bg-gray-700 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
-            <option [ngValue]="null">All Levels</option>
-            <option [ngValue]="100">100 Level</option>
-            <option [ngValue]="200">200 Level</option>
-            <option [ngValue]="300">300 Level</option>
-            <option [ngValue]="400">400 Level</option>
-            <option [ngValue]="500">500 Level</option>
-            <option [ngValue]="600">600 Level</option>
-          </select>
+          @if (isSuperAdmin) {
+            <select id="editLevel" [(ngModel)]="editableEntry.level" name="level"
+                    class="w-full bg-gray-100 dark:bg-gray-700 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+              <option [ngValue]="null">All Levels</option>
+              <option [ngValue]="100">100 Level</option>
+              <option [ngValue]="200">200 Level</option>
+              <option [ngValue]="300">300 Level</option>
+              <option [ngValue]="400">400 Level</option>
+              <option [ngValue]="500">500 Level</option>
+              <option [ngValue]="600">600 Level</option>
+            </select>
+          } @else {
+              <input type="text"
+                    [value]="authService.currentUser()?.level + ' Level'"
+                    disabled
+                    class="w-full bg-gray-200 dark:bg-gray-700/50 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+          }
         </div>
         <div>
           <label for="editCourse" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Course</label>

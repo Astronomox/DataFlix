@@ -30,7 +30,7 @@ export class MaterialsComponent implements OnInit {
   fileToUpload = signal<File | null>(null);
   newMaterialTitle = signal('');
   newMaterialCourse = signal('');
-  newMaterialDepartment = signal('');
+  newMaterialDepartment = signal<string | null>('');
   newMaterialLevel = signal<number | null>(null);
 
   // Delete modal state
@@ -50,7 +50,8 @@ export class MaterialsComponent implements OnInit {
     }
     
     if (level) {
-      materials = materials.filter(m => m.level === level);
+      // Show materials for the specific level OR materials for all levels
+      materials = materials.filter(m => m.level === level || !m.level);
     }
 
     if (!term) {
@@ -104,7 +105,8 @@ export class MaterialsComponent implements OnInit {
       this.newMaterialTitle.set(file.name.replace(/\.[^/.]+$/, ""));
       this.newMaterialCourse.set('');
       this.newMaterialDepartment.set('');
-      this.newMaterialLevel.set(this.authService.currentUser()?.level ?? 100);
+      // For Super Admin, default to "All Levels". For others, default to their level.
+      this.newMaterialLevel.set(this.isSuperAdmin ? null : (this.authService.currentUser()?.level ?? 100));
       this.isUploadModalOpen.set(true);
       input.value = ''; // Reset file input
     }
@@ -132,14 +134,13 @@ export class MaterialsComponent implements OnInit {
     const levelForUpload = (this.isAdmin && !this.isSuperAdmin) 
         ? user.level 
         : this.newMaterialLevel();
+    
+    const departmentForUpload = this.isSuperAdmin
+      ? this.newMaterialDepartment()
+      : user.department;
 
-    if (!levelForUpload) {
-        this.notificationService.show('Level is required.', 'warning');
-        return;
-    }
-
-    if (this.isSuperAdmin && !this.newMaterialDepartment()) {
-      this.notificationService.show('As Super Admin, you must select a department.', 'warning');
+    if (this.isSuperAdmin && departmentForUpload === '') {
+      this.notificationService.show('As Super Admin, you must select a department or "All Departments".', 'warning');
       return;
     }
     
@@ -159,8 +160,7 @@ export class MaterialsComponent implements OnInit {
       size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
     };
 
-    const department = this.isSuperAdmin ? this.newMaterialDepartment() : undefined;
-    const uploadedMaterial = await this.materialsService.uploadMaterial(newMaterialData, file, department);
+    const uploadedMaterial = await this.materialsService.uploadMaterial(newMaterialData, file, departmentForUpload);
     
     if (uploadedMaterial) {
       this.allMaterials.update(m => [uploadedMaterial, ...m]);

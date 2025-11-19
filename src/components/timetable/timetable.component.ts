@@ -35,12 +35,13 @@ export class TimetableComponent implements OnInit {
   // Edit modal state
   isEditModalOpen = signal(false);
   entryToEdit = signal<TimetableEntry | null>(null);
-  editableEntry: Partial<Omit<TimetableEntry, 'id' | 'department'>> = {
+  editableEntry: Partial<Omit<TimetableEntry, 'id'>> = {
     course: '',
     time: '',
     location: '',
     day: 'Monday',
     level: null,
+    department: '',
   };
 
   newEntry: Omit<TimetableEntry, 'id' | 'department'> = {
@@ -50,7 +51,7 @@ export class TimetableComponent implements OnInit {
     day: 'Monday',
     level: null,
   };
-  departmentForNewEntry = signal('');
+  departmentForNewEntry = signal<string | null>('');
 
   readonly weekdays: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -136,10 +137,11 @@ export class TimetableComponent implements OnInit {
         this.notificationService.show('All fields are required.', 'warning');
         return;
     }
+    
+    const departmentForPost = this.isSuperAdmin ? this.departmentForNewEntry() : user.department;
 
-    const department = this.isSuperAdmin ? this.departmentForNewEntry() : undefined;
-    if (this.isSuperAdmin && !department) {
-      this.notificationService.show('Please select a department for the new entry.', 'warning');
+    if (this.isSuperAdmin && departmentForPost === '') {
+      this.notificationService.show('Please select a department or "All Departments" for the new entry.', 'warning');
       return;
     }
 
@@ -148,7 +150,7 @@ export class TimetableComponent implements OnInit {
       entryData.level = user.level;
     }
 
-    const addedEntry = await this.timetableService.addEntry(entryData, department);
+    const addedEntry = await this.timetableService.addEntry(entryData, departmentForPost);
     if (addedEntry) {
       this.timetable.update(entries => [...entries, addedEntry]);
       this.notificationService.show('Entry added successfully!', 'success');
@@ -176,82 +178,3 @@ export class TimetableComponent implements OnInit {
   onLevelChange(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.selectedLevel.set(value ? Number(value) : null);
-  }
-
-  onCourseChange(event: Event) {
-    this.selectedCourse.set((event.target as HTMLSelectElement).value);
-  }
-
-  onLocationChange(event: Event) {
-    this.selectedLocation.set((event.target as HTMLSelectElement).value);
-  }
-
-  clearFilters() {
-    this.selectedDepartment.set('');
-    this.selectedLevel.set(this.authService.isSuperAdmin() ? null : (this.authService.currentUser()?.level ?? null));
-    this.selectedCourse.set('');
-    this.selectedLocation.set('');
-    // Need to reset the dropdowns manually if they are not bound with ngModel
-    if (this.isSuperAdmin) {
-      (document.getElementById('departmentFilter') as HTMLSelectElement).value = '';
-    }
-    (document.getElementById('levelFilter') as HTMLSelectElement).value = this.selectedLevel()?.toString() ?? '';
-    (document.getElementById('courseFilter') as HTMLSelectElement).value = '';
-    (document.getElementById('locationFilter') as HTMLSelectElement).value = '';
-  }
-
-  // --- Delete Modal Methods ---
-  openDeleteModal(entry: TimetableEntry) {
-    this.entryToDelete.set(entry);
-    this.isDeleteModalOpen.set(true);
-  }
-
-  closeDeleteModal() {
-    this.isDeleteModalOpen.set(false);
-    this.entryToDelete.set(null);
-  }
-
-  confirmDelete() {
-    const entry = this.entryToDelete();
-    if (entry) {
-      this.deleteEntry(entry.id);
-    }
-    this.closeDeleteModal();
-  }
-
-  // --- Edit Modal Methods ---
-  openEditModal(entry: TimetableEntry) {
-    this.entryToEdit.set(entry);
-    // Create a copy for editing
-    this.editableEntry = { 
-      course: entry.course,
-      time: entry.time,
-      location: entry.location,
-      day: entry.day,
-      level: entry.level,
-    };
-    this.isEditModalOpen.set(true);
-  }
-
-  closeEditModal() {
-    this.isEditModalOpen.set(false);
-    this.entryToEdit.set(null);
-  }
-
-  async confirmEdit() {
-    const entry = this.entryToEdit();
-    if (!entry) return;
-
-    if (!this.editableEntry.course || !this.editableEntry.time || !this.editableEntry.location || !this.editableEntry.day) {
-        this.notificationService.show('All fields are required for the update.', 'warning');
-        return;
-    }
-
-    const updatedEntry = await this.timetableService.updateEntry(entry.id, this.editableEntry);
-    if (updatedEntry) {
-      this.timetable.update(entries => entries.map(e => e.id === updatedEntry.id ? updatedEntry : e));
-      this.notificationService.show('Timetable entry updated successfully!', 'success');
-      this.closeEditModal();
-    }
-  }
-}

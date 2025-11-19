@@ -9,7 +9,7 @@ export interface Announcement {
   content: string;
   author: string;
   date: string;
-  department: string;
+  department: string | null;
   level?: number;
 }
 
@@ -49,7 +49,7 @@ export class AnnouncementsService {
           .select('*');
 
         if (!isSuperAdmin) {
-          query = query.eq('department', user.department!);
+          query = query.or(`department.eq.${user.department!},department.is.null`);
         }
 
         const { data, error } = await query.order('date', { ascending: false });
@@ -66,27 +66,21 @@ export class AnnouncementsService {
     return this.announcementsPromise;
   }
   
-  async createAnnouncement(title: string, content: string, author: string, department?: string, level?: number | null): Promise<Announcement | null> {
-    const user = this.authService.currentUser();
-    const targetDepartment = department || user?.department;
-
-    if (!targetDepartment) {
+  async createAnnouncement(title: string, content: string, author: string, department: string | null | undefined, level?: number | null): Promise<Announcement | null> {
+    if (department === undefined) {
       this.notificationService.show('Could not determine a department to post the announcement to.', 'error');
       return null;
     }
 
     try {
-      const newAnnouncementData: any = {
+      const newAnnouncementData = {
         title,
         content,
         author,
         date: new Date().toISOString(),
-        department: targetDepartment,
+        department: department,
+        level: level || undefined,
       };
-
-      if (level) {
-        newAnnouncementData.level = level;
-      }
       
       const { data, error } = await supabase
           .from('announcements')
@@ -105,7 +99,7 @@ export class AnnouncementsService {
     }
   }
 
-  async updateAnnouncement(id: string, updates: { title: string, content: string, level?: number | null }): Promise<Announcement | null> {
+  async updateAnnouncement(id: string, updates: Partial<Omit<Announcement, 'id'>>): Promise<Announcement | null> {
     try {
       const { data, error } = await supabase
         .from('announcements')

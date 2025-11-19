@@ -12,7 +12,7 @@ export interface Material {
   upload_date: string;
   file_path: string;
   file_url?: string;
-  department: string;
+  department: string | null;
   level?: number;
 }
 
@@ -52,7 +52,7 @@ export class MaterialsService {
           .select('*');
 
         if (!isSuperAdmin) {
-          query = query.eq('department', user.department!);
+          query = query.or(`department.eq.${user.department!},department.is.null`);
         }
 
         const { data, error } = await query.order('upload_date', { ascending: false });
@@ -97,16 +97,14 @@ export class MaterialsService {
     }
   }
 
-  async uploadMaterial(newMaterialData: Omit<Material, 'id' | 'upload_date' | 'file_path' | 'file_url' | 'department'>, file: File, department?: string): Promise<Material | null> {
-    const user = this.authService.currentUser();
-    const targetDepartment = this.authService.isSuperAdmin() && department ? department : user?.department;
-
-    if (!targetDepartment) {
+  async uploadMaterial(newMaterialData: Omit<Material, 'id' | 'upload_date' | 'file_path' | 'file_url' | 'department'>, file: File, department: string | null | undefined): Promise<Material | null> {
+    if (department === undefined) {
       this.notificationService.show('Could not determine department for material upload.', 'error');
       return null;
     }
     
-    const filePath = `${targetDepartment.replace(/\s+/g, '_')}/${newMaterialData.course.replace(/\s+/g, '_')}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const departmentPath = department?.replace(/[\s/\\?%*:|"<>]/g, '_') ?? 'All_Departments';
+    const filePath = `${departmentPath}/${newMaterialData.course.replace(/\s+/g, '_')}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     
     try {
       const { error: uploadError } = await supabase.storage
@@ -117,7 +115,7 @@ export class MaterialsService {
       
       const materialToInsert = {
           ...newMaterialData,
-          department: targetDepartment,
+          department: department,
           upload_date: new Date().toISOString().split('T')[0],
           file_path: filePath,
       };

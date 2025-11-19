@@ -11,7 +11,7 @@ export interface TimetableEntry {
   time: string;
   course: string;
   location: string;
-  department: string;
+  department: string | null;
   level?: number | null;
 }
 
@@ -51,7 +51,7 @@ export class TimetableService {
             .select('*');
 
         if (!isSuperAdmin) {
-          query = query.eq('department', user.department!);
+          query = query.or(`department.eq.${user.department!},department.is.null`);
         }
         
         const { data, error } = await query;
@@ -68,11 +68,8 @@ export class TimetableService {
     return this.timetablePromise;
   }
 
-  async addEntry(entryData: Omit<TimetableEntry, 'id' | 'department'>, department?: string): Promise<TimetableEntry | null> {
-    const user = this.authService.currentUser();
-    const targetDepartment = department || user?.department;
-
-    if (!targetDepartment) {
+  async addEntry(entryData: Omit<TimetableEntry, 'id' | 'department'>, department: string | null | undefined): Promise<TimetableEntry | null> {
+    if (department === undefined) {
       this.notificationService.show('Could not determine a department for the timetable entry.', 'error');
       return null;
     }
@@ -80,7 +77,7 @@ export class TimetableService {
     try {
       const dataToInsert = {
         ...entryData,
-        department: targetDepartment,
+        department: department,
       };
 
       const { data, error } = await supabase
@@ -100,7 +97,7 @@ export class TimetableService {
     }
   }
 
-  async updateEntry(id: string, entryData: Partial<Omit<TimetableEntry, 'id' | 'department'>>): Promise<TimetableEntry | null> {
+  async updateEntry(id: string, entryData: Partial<Omit<TimetableEntry, 'id'>>): Promise<TimetableEntry | null> {
     try {
       const dataToUpdate = { ...entryData };
       
