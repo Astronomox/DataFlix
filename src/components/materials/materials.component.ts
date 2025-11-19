@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { MaterialsService, Material } from '../../services/materials.service';
-import { UNILAG_FACULTIES } from '../../data/unilag-courses';
+// FIX: Import `Faculty` type to resolve type inference issues.
+import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-materials',
@@ -13,9 +14,10 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MaterialsComponent implements OnInit {
-  authService = inject(AuthService);
-  notificationService = inject(NotificationService);
-  materialsService = inject(MaterialsService);
+  // FIX: Add explicit types for injected services to prevent 'unknown' type errors.
+  authService: AuthService = inject(AuthService);
+  notificationService: NotificationService = inject(NotificationService);
+  materialsService: MaterialsService = inject(MaterialsService);
   
   isAdmin = this.authService.isAdmin();
   isSuperAdmin = this.authService.isSuperAdmin();
@@ -66,7 +68,8 @@ export class MaterialsComponent implements OnInit {
   ngOnInit() {
     this.loadMaterials();
     if (this.isSuperAdmin) {
-      const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
+      // FIX: Add explicit type to flatMap callback parameter to resolve 'unknown[]' type error.
+      const depts = UNILAG_FACULTIES.flatMap((f: Faculty) => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
     } else {
       // Default filter to student's level
