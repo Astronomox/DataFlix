@@ -96,11 +96,9 @@ export class TimetableComponent implements OnInit {
     }, {} as Record<Day, TimetableEntry[]>);
   });
 
-  // FIX: Removed duplicate 'showNoFilterResultsMessage' property.
   showNoFilterResultsMessage = computed(() => {
     return this.timetable().length > 0 && 
            this.isAnyFilterActive() && 
-           // Fix: Explicitly type `day` to resolve `unknown` type error from `Object.values`.
            Object.values(this.filteredTimetable()).every((day: TimetableEntry[]) => day.length === 0);
   });
 
@@ -178,3 +176,88 @@ export class TimetableComponent implements OnInit {
   onLevelChange(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.selectedLevel.set(value ? Number(value) : null);
+  }
+
+  onCourseChange(event: Event) {
+    this.selectedCourse.set((event.target as HTMLSelectElement).value);
+  }
+
+  onLocationChange(event: Event) {
+    this.selectedLocation.set((event.target as HTMLSelectElement).value);
+  }
+
+  clearFilters() {
+    this.selectedDepartment.set('');
+    if (!this.isAdmin || !this.isSuperAdmin) {
+        this.selectedLevel.set(this.authService.currentUser()?.level ?? null);
+    } else {
+        this.selectedLevel.set(null);
+    }
+    this.selectedCourse.set('');
+    this.selectedLocation.set('');
+  }
+
+  // --- Delete Modal Methods ---
+  openDeleteModal(entry: TimetableEntry) {
+    this.entryToDelete.set(entry);
+    this.isDeleteModalOpen.set(true);
+  }
+
+  closeDeleteModal() {
+    this.isDeleteModalOpen.set(false);
+    this.entryToDelete.set(null);
+  }
+
+  confirmDelete() {
+    const entry = this.entryToDelete();
+    if (entry) {
+      this.deleteEntry(entry.id);
+    }
+    this.closeDeleteModal();
+  }
+
+  // --- Edit Modal Methods ---
+  openEditModal(entry: TimetableEntry) {
+    this.entryToEdit.set(entry);
+    this.editableEntry = { ...entry };
+    this.isEditModalOpen.set(true);
+  }
+
+  closeEditModal() {
+    this.isEditModalOpen.set(false);
+    this.entryToEdit.set(null);
+  }
+
+  async confirmEdit() {
+    const user = this.authService.currentUser();
+    const entry = this.entryToEdit();
+    if (!entry || !user || !this.editableEntry.course || !this.editableEntry.time || !this.editableEntry.location) {
+        this.notificationService.show('Course, Time, and Location cannot be empty.', 'warning');
+        return;
+    }
+    
+    const updates: Partial<Omit<TimetableEntry, 'id'>> = {
+      course: this.editableEntry.course,
+      time: this.editableEntry.time,
+      location: this.editableEntry.location,
+      day: this.editableEntry.day,
+    };
+
+    if (this.isSuperAdmin) {
+        updates.level = this.editableEntry.level;
+        updates.department = this.editableEntry.department;
+    } else {
+        // For basic admins, force the level and department to be their own.
+        updates.level = user.level;
+        updates.department = user.department;
+    }
+
+    const updatedEntry = await this.timetableService.updateEntry(entry.id, updates);
+
+    if (updatedEntry) {
+      this.timetable.update(entries => entries.map(e => e.id === updatedEntry.id ? updatedEntry : e));
+      this.notificationService.show('Timetable entry updated successfully.', 'success');
+      this.closeEditModal();
+    }
+  }
+}
