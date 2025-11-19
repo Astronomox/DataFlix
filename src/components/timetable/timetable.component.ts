@@ -108,11 +108,16 @@ export class TimetableComponent implements OnInit {
     if (this.isSuperAdmin) {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
+      this.newEntry.level = null; // Super Admin can post to all levels by default
     } else {
-      // Default filter to student's level
-      this.selectedLevel.set(this.authService.currentUser()?.level ?? null);
+      const userLevel = this.authService.currentUser()?.level ?? null;
+      // Default filter to user's level
+      this.selectedLevel.set(userLevel);
+      // For basic admins, pre-fill and lock their level for new entries
+      if (this.isAdmin) {
+          this.newEntry.level = userLevel ?? 100;
+      }
     }
-    this.newEntry.level = this.authService.currentUser()?.level ?? 100;
   }
 
   async loadTimetable() {
@@ -139,7 +144,7 @@ export class TimetableComponent implements OnInit {
       this.timetable.update(entries => [...entries, addedEntry]);
       this.notificationService.show('Entry added successfully!', 'success');
       // Reset form
-      const defaultLevel = this.authService.currentUser()?.level ?? 100;
+      const defaultLevel = (this.isAdmin && !this.isSuperAdmin) ? (this.authService.currentUser()?.level ?? 100) : null;
       this.newEntry = { course: '', time: '', location: '', day: 'Monday', level: defaultLevel };
       if (this.isSuperAdmin) {
         this.departmentForNewEntry.set('');

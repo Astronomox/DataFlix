@@ -77,7 +77,8 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
               </div>
             }
              <div>
-                <label for="levelSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Level (Optional)</label>
+                <label for="levelSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Level</label>
+                @if (isSuperAdmin) {
                  <select 
                     id="levelSelect"
                     name="levelForNewAnnouncement"
@@ -91,6 +92,12 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
                     <option [ngValue]="500">500 Level</option>
                     <option [ngValue]="600">600 Level</option>
                  </select>
+                } @else {
+                  <input type="text"
+                    [value]="newAnnouncement.level + ' Level'"
+                    disabled
+                    class="w-full bg-white/10 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                }
               </div>
             <input type="text" placeholder="Title" [(ngModel)]="newAnnouncement.title" name="title" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
             <textarea placeholder="Content..." [(ngModel)]="newAnnouncement.content" name="content" required rows="4" class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
@@ -273,9 +280,15 @@ export class AnnouncementsComponent implements OnInit {
     if (this.isSuperAdmin) {
       const depts = UNILAG_FACULTIES.flatMap(f => f.courses);
       this.allDepartments.set([...new Set(depts)].sort());
+      this.newAnnouncement.level = null; // Super Admin can post to all levels by default
     } else {
-      // Default filter to student's level
-      this.selectedLevel.set(this.authService.currentUser()?.level ?? null);
+      const userLevel = this.authService.currentUser()?.level ?? null;
+      // Default filter to user's level
+      this.selectedLevel.set(userLevel);
+      // For basic admins, pre-fill and lock their level for new announcements
+      if (this.isAdmin) {
+          this.newAnnouncement.level = userLevel ?? 100;
+      }
     }
   }
 
@@ -310,9 +323,10 @@ export class AnnouncementsComponent implements OnInit {
         if (announcement) {
           this.announcements.update(list => [announcement, ...list]);
           this.notificationService.show('Announcement posted!', 'success');
+          // Reset form
           this.newAnnouncement.title = '';
           this.newAnnouncement.content = '';
-          this.newAnnouncement.level = null;
+          this.newAnnouncement.level = (this.isAdmin && !this.isSuperAdmin) ? (this.authService.currentUser()?.level ?? 100) : null;
           if (this.isSuperAdmin) {
             this.departmentForNewAnnouncement = '';
           }
