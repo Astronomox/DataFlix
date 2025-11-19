@@ -73,6 +73,27 @@ export class MaterialsService {
     return this.materialsPromise;
   }
 
+  async updateMaterial(id: string, updates: Partial<Omit<Material, 'id'>>): Promise<Material | null> {
+    try {
+        const { data, error } = await supabase
+            .from('materials')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        this.materialsPromise = null; // Invalidate cache
+        const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(data.file_path);
+        return { ...data, file_url: publicUrl } as Material;
+    } catch (error: any) {
+        console.error("Error updating material:", error.message);
+        this.notificationService.show('Could not update material. Please try again.', 'error');
+        return null;
+    }
+  }
+
   async deleteMaterial(material: Material): Promise<boolean> {
     try {
       const { error: storageError } = await supabase.storage

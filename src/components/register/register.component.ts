@@ -160,6 +160,10 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
             </button>
           </form>
 
+          <div class="mt-4 text-center text-sm">
+            <a routerLink="/forgot-password" class="font-semibold text-white hover:underline">Forgot Password?</a>
+          </div>
+
           <div class="mt-6 text-center text-sm text-gray-300">
             <p>Already have an account? <a routerLink="/login" class="font-semibold text-white hover:underline">Sign In</a></p>
           </div>

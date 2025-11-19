@@ -38,6 +38,10 @@ export class AuthService {
             await this.loadUserProfile(session.user);
           }
           this.resolveAuthInitialized(); // Resolve promise after handling initial session
+        } else if (event === 'PASSWORD_RECOVERY') {
+            // When user clicks the password recovery link, Supabase redirects them here.
+            // We then navigate them to the page to set a new password.
+            this.router.navigate(['/reset-password']);
         }
       });
     });
@@ -209,6 +213,37 @@ export class AuthService {
       console.error('Error updating profile picture:', error);
       this.notificationService.show(error.message || 'Failed to update profile picture. Please try again.', 'error');
       return false;
+    }
+  }
+
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/#/', // Supabase needs the full path including hash for SPA routing
+      });
+      if (error) {
+        this.notificationService.show(error.message, 'error');
+        return;
+      }
+      this.notificationService.show('Password reset link sent! Please check your email.', 'success', 5000);
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      this.notificationService.show('An unexpected error occurred. Please try again.', 'error');
+    }
+  }
+
+  async updatePassword(password: string): Promise<void> {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        this.notificationService.show(error.message, 'error');
+        return;
+      }
+      this.notificationService.show('Password updated successfully! You can now log in with your new password.', 'success', 5000);
+      this.ngZone.run(() => this.router.navigate(['/login']));
+    } catch (error: any) {
+      console.error('Update password error:', error);
+      this.notificationService.show('An unexpected error occurred. Please try again.', 'error');
     }
   }
 }

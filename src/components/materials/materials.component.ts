@@ -33,6 +33,16 @@ export class MaterialsComponent implements OnInit {
   newMaterialDepartment = signal<string | null>('');
   newMaterialLevel = signal<number | null>(null);
 
+  // Edit modal state
+  isEditModalOpen = signal(false);
+  materialToEdit = signal<Material | null>(null);
+  editableMaterial = {
+    title: '',
+    course: '',
+    level: null as number | null,
+    department: null as string | null
+  };
+
   // Delete modal state
   isDeleteModalOpen = signal(false);
   materialToDelete = signal<Material | null>(null);
@@ -176,6 +186,50 @@ export class MaterialsComponent implements OnInit {
         this.notificationService.show('Material deleted successfully.', 'success');
       }
     });
+  }
+
+  // --- Edit Modal Methods ---
+  openEditModal(material: Material) {
+    this.materialToEdit.set(material);
+    this.editableMaterial = {
+      title: material.title,
+      course: material.course,
+      level: material.level ?? null,
+      department: material.department ?? null,
+    };
+    this.isEditModalOpen.set(true);
+  }
+
+  closeEditModal() {
+    this.isEditModalOpen.set(false);
+    this.materialToEdit.set(null);
+  }
+
+  async confirmEdit() {
+    const user = this.authService.currentUser();
+    const material = this.materialToEdit();
+    if (!material || !user || !this.editableMaterial.title || !this.editableMaterial.course) {
+        this.notificationService.show('Title and Course cannot be empty.', 'warning');
+        return;
+    }
+
+    const updates: Partial<Omit<Material, 'id'>> = {
+        title: this.editableMaterial.title,
+        course: this.editableMaterial.course,
+    };
+
+    if (this.isSuperAdmin) {
+        updates.level = this.editableMaterial.level;
+        updates.department = this.editableMaterial.department;
+    }
+
+    const updatedMaterial = await this.materialsService.updateMaterial(material.id, updates);
+
+    if (updatedMaterial) {
+        this.allMaterials.update(materials => materials.map(m => m.id === updatedMaterial.id ? updatedMaterial : m));
+        this.notificationService.show('Material updated successfully.', 'success');
+        this.closeEditModal();
+    }
   }
 
   // --- Delete Modal Methods ---
