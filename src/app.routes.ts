@@ -37,6 +37,10 @@ export const APP_ROUTES: Routes = [
         path: 'profile',
         loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent)
       },
+      { 
+        path: 'contact',
+        loadComponent: () => import('./components/contact/contact.component').then(m => m.ContactComponent)
+      },
     ]
   },
   { path: '**', redirectTo: 'dashboard' } 

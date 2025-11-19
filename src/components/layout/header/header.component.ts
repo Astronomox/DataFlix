@@ -5,6 +5,7 @@ import { ThemeService } from '../../../services/theme.service';
 
 @Component({
   selector: 'app-header',
+  standalone: true,
   templateUrl: './header.component.html',
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,

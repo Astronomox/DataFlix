@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-sidebar',
+  standalone: true,
   templateUrl: './sidebar.component.html',
   imports: [RouterLink, RouterLinkActive],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,5 +17,6 @@ export class SidebarComponent {
     { path: '/timetable', icon: 'calendar', name: 'Timetable' },
     { path: '/announcements', icon: 'megaphone', name: 'Announcements' },
     { path: '/profile', icon: 'user', name: 'Profile' },
+    { path: '/contact', icon: 'mail', name: 'Contact Us' },
   ];
 }
