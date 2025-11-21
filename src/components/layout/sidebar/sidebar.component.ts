@@ -13,6 +13,7 @@ export class SidebarComponent {
 
   navLinks = [
     { path: '/dashboard', icon: 'home', name: 'Dashboard' },
+    { path: '/ai-briefing', icon: 'sparkle', name: 'Daily Briefing' },
     { path: '/materials', icon: 'book-open', name: 'Course Materials' },
     { path: '/timetable', icon: 'calendar', name: 'Timetable' },
     { path: '/announcements', icon: 'megaphone', name: 'Announcements' },

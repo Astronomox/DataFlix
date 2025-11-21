@@ -4,9 +4,7 @@ import { User, UserRole } from '../models/user.model';
 import { NotificationService } from './notification.service';
 import { supabase } from '../supabase.config';
 import { UNILAG_FACULTIES } from '../data/unilag-courses';
-// FIX: Removed Supabase v2 type imports that are not available in older versions, which caused compilation errors.
-// The types for session and user will be inferred as `any`.
-// import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -23,9 +21,7 @@ export class AuthService {
         this.resolveAuthInitialized = resolve;
     });
 
-    // FIX: Updated `onAuthStateChange` callback signature for compatibility with older Supabase client versions.
-    // Replaced `AuthChangeEvent` with `string` and `Session` with `any` to resolve type errors.
-    supabase.auth.onAuthStateChange(async (event: string, session: any | null) => {
+    supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       this.ngZone.run(async () => {
         if (event === 'SIGNED_IN' && session?.user) {
           await this.loadUserProfile(session.user);
@@ -56,8 +52,7 @@ export class AuthService {
     return faculty?.name;
   }
 
-  // FIX: The type for the supabaseUser parameter is set to `any` to resolve import errors.
-  private async loadUserProfile(supabaseUser: any) {
+  private async loadUserProfile(supabaseUser: SupabaseUser) {
     try {
       const { data, error } = await supabase
         .from('users')
@@ -87,7 +82,6 @@ export class AuthService {
 
   async login(email: string, password: string): Promise<void> {
     try {
-      // FIX: Updated to `signInWithPassword` for compatibility with Supabase JS v2.
       const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
@@ -110,7 +104,6 @@ export class AuthService {
         return false;
       }
 
-      // FIX: Updated `signUp` method signature to be compatible with Supabase JS v2.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -144,8 +137,6 @@ export class AuthService {
   }
 
   async logout() {
-    // FIX: `signOut` is compatible with many Supabase versions, but was reported as an error.
-    // The v1/v2 signature is the same, so no code change is needed, but this confirms it was reviewed.
     await supabase.auth.signOut();
     this.currentUser.set(null);
     this.notificationService.show('You have been logged out.', 'info');

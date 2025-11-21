@@ -1,4 +1,65 @@
 <div class="container mx-auto">
+  <!-- AI Daily Briefing -->
+  @if (isBriefingVisible()) {
+    <div class="mb-8 p-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg flex flex-col sm:flex-row gap-6">
+      <div class="flex-shrink-0 flex justify-center items-center">
+        <!-- "Alive" AI Icon -->
+        <div class="relative w-24 h-24">
+            <svg class="absolute w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="metaball">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur" />
+                  <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="metaball" />
+                  <feComposite in="SourceGraphic" in2="metaball" operator="atop" />
+                </filter>
+              </defs>
+              <g style="filter: url(#metaball);">
+                <circle cx="50" cy="50" r="25" fill="#8B5CF6" class="animate-blob1" />
+                <circle cx="50" cy="50" r="20" fill="#7C3AED" class="animate-blob2" />
+                <circle cx="50" cy="50" r="15" fill="#6D28D9" class="animate-blob3" />
+              </g>
+            </svg>
+            <style>
+              @keyframes blob-move1 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(15px, -10px); } 50% { transform: translate(-10px, 15px); } 75% { transform: translate(5px, 5px); } }
+              @keyframes blob-move2 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-5px, 12px); } 50% { transform: translate(10px, -8px); } 75% { transform: translate(-12px, -5px); } }
+              @keyframes blob-move3 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(8px, 8px); } 50% { transform: translate(-12px, 5px); } 75% { transform: translate(10px, -10px); } }
+              .animate-blob1 { animation: blob-move1 12s ease-in-out infinite; transform-origin: center center; }
+              .animate-blob2 { animation: blob-move2 10s ease-in-out infinite; transform-origin: center center; }
+              .animate-blob3 { animation: blob-move3 8s ease-in-out infinite; transform-origin: center center; }
+            </style>
+          </div>
+      </div>
+      <div class="flex-grow">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Your Daily Briefing from Flixy</h2>
+        @if (isLoadingGreeting()) {
+          <div class="mt-2 h-6 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
+        } @else {
+          <p class="mt-2 text-gray-700 dark:text-gray-300">{{ aiGreeting() }}</p>
+        }
+        
+        <div class="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+          <h3 class="font-semibold text-gray-800 dark:text-white">Here's your schedule for today:</h3>
+          <div class="mt-2 space-y-2">
+            @for(entry of todaysSchedule(); track entry.id) {
+              <div class="flex items-center gap-3 text-sm">
+                <span class="font-bold text-purple-600 dark:text-purple-400 w-28">{{ entry.time }}</span>
+                <span class="text-gray-700 dark:text-gray-300">{{ entry.course }}</span>
+                <span class="text-gray-500 dark:text-gray-400 italic">({{ entry.location }})</span>
+              </div>
+            } @empty {
+              <p class="text-sm text-gray-500 dark:text-gray-400">You have no classes scheduled for today. Have a great and productive day!</p>
+            }
+          </div>
+        </div>
+      </div>
+       <div class="self-start sm:self-center">
+        <button (click)="dismissBriefing()" class="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 dark:bg-purple-900/50 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900 transition-colors">
+          Got it!
+        </button>
+      </div>
+    </div>
+  }
+
   @if (currentUser(); as user) {
     <h1 class="text-3xl font-bold text-gray-800 dark:text-white">
       Welcome back, {{ user.name.split(' ')[0] }}!
@@ -67,6 +128,8 @@
   <!-- Quick Tips -->
   <div class="mt-8 p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
     <h3 class="font-bold text-lg">Quick Tip</h3>
-    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Use the theme toggle in the header to switch between light and dark modes for comfortable viewing, day or night!</p>
+    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+      You can update your profile picture and personal details by visiting the <a routerLink="/profile" class="font-semibold text-purple-600 dark:text-purple-400 hover:underline">Profile</a> page. Keeping your information current helps administrators stay in touch!
+    </p>
   </div>
 </div>
