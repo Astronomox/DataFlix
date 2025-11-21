@@ -26,6 +26,13 @@
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
+    /* AI "Living" Icon Animations */
+    @keyframes blob-move1 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(15px, -10px); } 50% { transform: translate(-10px, 15px); } 75% { transform: translate(5px, 5px); } }
+    @keyframes blob-move2 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-5px, 12px); } 50% { transform: translate(10px, -8px); } 75% { transform: translate(-12px, -5px); } }
+    @keyframes blob-move3 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(8px, 8px); } 50% { transform: translate(-12px, 5px); } 75% { transform: translate(10px, -10px); } }
+    .animate-blob1 { animation: blob-move1 12s ease-in-out infinite; transform-origin: center center; }
+    .animate-blob2 { animation: blob-move2 10s ease-in-out infinite; transform-origin: center center; }
+    .animate-blob3 { animation: blob-move3 8s ease-in-out infinite; transform-origin: center center; }
   </style>
 <script type="importmap">
 {

@@ -4,11 +4,37 @@
       class="flex items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white divide-x divide-gray-200 rounded-lg shadow-lg dark:text-gray-400 dark:divide-gray-700 dark:bg-gray-800 transition-all duration-300 animate-fade-in-right"
       role="alert"
     >
-      <div class="flex-shrink-0 p-2 rounded-full" [ngClass]="getIconClasses(notification.type)">
-        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path [attr.d]="getIconPath(notification.type)"></path>
-        </svg>
-      </div>
+      @switch (notification.type) {
+        @case ('success') {
+          <div class="flex-shrink-0 p-2 rounded-full bg-green-500">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+            </svg>
+          </div>
+        }
+        @case ('error') {
+          <div class="flex-shrink-0 p-2 rounded-full bg-red-500">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
+            </svg>
+          </div>
+        }
+        @case ('info') {
+          <div class="flex-shrink-0 p-2 rounded-full bg-blue-500">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path>
+            </svg>
+          </div>
+        }
+        @case ('warning') {
+          <div class="flex-shrink-0 p-2 rounded-full bg-yellow-500">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path>
+            </svg>
+          </div>
+        }
+      }
+
       <div class="pl-4 text-sm font-normal">{{ notification.message }}</div>
        <button (click)="close(notification.id)" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" type="button" aria-label="Close">
         <span class="sr-only">Close</span>
