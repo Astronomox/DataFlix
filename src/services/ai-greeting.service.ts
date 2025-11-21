@@ -52,8 +52,26 @@ export class AiGreetingService {
       }
 
       return greeting;
-    } catch (error) {
-      console.error('Error fetching AI greeting from serverless function:', error);
+    } catch (err: any) {
+      // This logic is designed to extract a clear, human-readable error message
+      // from the server response, preventing the "[object Object]" error in logs.
+      let errorMessage = 'An unexpected server error occurred.';
+
+      if (err.error) {
+        if (typeof err.error.error === 'string') {
+          // Handles Vercel function's { error: "message" } response
+          errorMessage = err.error.error;
+        } else if (typeof err.error === 'string') {
+          // Handles a plain text error response
+          errorMessage = err.error;
+        }
+      } else if (err.message) {
+        // Catches network errors (like CORS) or other client-side fetch issues
+        errorMessage = err.message;
+      }
+
+      console.error('Error fetching AI greeting from serverless function:', errorMessage);
+      
       // Provide a graceful fallback if the API fails
       return `Good ${this.getTimeOfDay()}, ${userName}! Wishing you a wonderful day.`;
     }

@@ -149,7 +149,16 @@ export class AuthService {
   }
 
   isSuperAdmin(): boolean {
-    return this.currentUser()?.email === 'abdullahioriola02@gmail.com';
+    const superAdminEmails = [
+      'abdullahioriola02@gmail.com',
+      'sanuthquareeb@gmail.com',
+      'mariamlawalajoke07@gmail.com'
+    ];
+    const currentUserEmail = this.currentUser()?.email;
+    if (!currentUserEmail) {
+      return false;
+    }
+    return superAdminEmails.includes(currentUserEmail);
   }
 
   async updateUserProfile(uid: string, data: { name: string; department: string; birthday: string | null; phone: string | null; level: number; }): Promise<boolean> {
