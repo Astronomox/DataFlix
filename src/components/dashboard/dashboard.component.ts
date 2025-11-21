@@ -57,16 +57,20 @@ export class DashboardComponent implements OnInit {
     const greetingPromise = this.aiGreetingService.getGreeting();
     const schedulePromise = this.loadTodaysSchedule();
 
-    this.aiGreeting.set(await greetingPromise);
-    this.isLoadingGreeting.set(false);
-    
-    await schedulePromise;
+    try {
+        this.aiGreeting.set(await greetingPromise);
+        await schedulePromise;
+    } catch (error) {
+        console.error("Error loading daily briefing on dashboard:", error);
+        this.aiGreeting.set("Could not load your briefing at this time. Please try again later.");
+    } finally {
+        this.isLoadingGreeting.set(false);
+    }
   }
 
   async loadTodaysSchedule() {
     const today = new Date();
-    const weekday: string[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const currentDay = weekday[today.getDay()];
+    const currentDay = today.toLocaleDateString('en-US', { weekday: 'long' });
 
     const allEntries = await this.timetableService.getTimetable();
     const todayEntries = allEntries
