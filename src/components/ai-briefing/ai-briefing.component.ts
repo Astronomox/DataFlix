@@ -75,7 +75,9 @@ import { RouterLink } from '@angular/router';
                 <li>
                   <a routerLink="/materials" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 dark:hover:bg-gray-700/40 transition-colors">
                     <div class="w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                      <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                      <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.838l8.57 3.908a2 2 0 0 0 1.66 0l8.59-3.908Z"></path><path d="M6 12v4c0 4.5 3 5 6 5s6-.5 6-5v-4"></path>
+                      </svg>
                     </div>
                     <span class="font-medium text-gray-700 dark:text-gray-300">Course Materials</span>
                   </a>
@@ -83,7 +85,9 @@ import { RouterLink } from '@angular/router';
                  <li>
                   <a routerLink="/announcements" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 dark:hover:bg-gray-700/40 transition-colors">
                     <div class="w-8 h-8 flex items-center justify-center bg-yellow-100 dark:bg-yellow-900/50 rounded-lg">
-                      <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.2 0 7.625-3.514 7.625-7.812V5.882"></path></svg>
+                      <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11 5 6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                      </svg>
                     </div>
                     <span class="font-medium text-gray-700 dark:text-gray-300">Announcements</span>
                   </a>
@@ -91,7 +95,9 @@ import { RouterLink } from '@angular/router';
                  <li>
                   <a routerLink="/timetable" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 dark:hover:bg-gray-700/40 transition-colors">
                     <div class="w-8 h-8 flex items-center justify-center bg-green-100 dark:bg-green-900/50 rounded-lg">
-                      <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path>
+                      </svg>
                     </div>
                     <span class="font-medium text-gray-700 dark:text-gray-300">Full Timetable</span>
                   </a>

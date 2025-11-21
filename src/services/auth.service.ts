@@ -8,7 +8,8 @@ import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supaba
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private router = inject(Router);
+  // Fix: Explicitly type the injected Router instance.
+  private router: Router = inject(Router);
   private notificationService = inject(NotificationService);
   private ngZone = inject(NgZone);
   
