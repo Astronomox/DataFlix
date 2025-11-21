@@ -4,7 +4,8 @@ import { AuthService } from '../services/auth.service';
 
 export const authGuard: CanActivateFn = async () => {
   const authService = inject(AuthService);
-  const router = inject(Router);
+  // Fix: Explicitly type the injected Router instance.
+  const router: Router = inject(Router);
 
   await authService.waitForAuthInitialization();
 

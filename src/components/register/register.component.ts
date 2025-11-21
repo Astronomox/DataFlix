@@ -8,6 +8,7 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-register',
+  standalone: true,
   template: `
     <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-slate-900 p-4">
       <div class="w-full max-w-md">

@@ -8,6 +8,7 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-materials',
+  standalone: true,
   templateUrl: './materials.component.html',
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,

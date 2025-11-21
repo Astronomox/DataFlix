@@ -8,6 +8,7 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-announcements',
+  standalone: true,
   template: `
     <div class="container mx-auto">
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">

@@ -16,7 +16,8 @@ import { lastValueFrom } from 'rxjs';
 export class ContactComponent {
   authService = inject(AuthService);
   notificationService = inject(NotificationService);
-  http = inject(HttpClient);
+  // Fix: Explicitly type the injected HttpClient instance.
+  http: HttpClient = inject(HttpClient);
   currentUser = this.authService.currentUser;
 
   subject = signal('');
