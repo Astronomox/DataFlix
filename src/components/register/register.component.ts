@@ -20,12 +20,14 @@ export class RegisterComponent {
   name = '';
   email = '';
   password = '';
+  confirmPassword = '';
   department = '';
   level = 100;
   role: UserRole = UserRole.Student;
   secretCode = '';
   isLoading = signal(false);
   passwordVisible = signal(false);
+  confirmPasswordVisible = signal(false);
   secretCodeVisible = signal(false);
 
   faculties: Faculty[] = UNILAG_FACULTIES;
@@ -45,12 +47,18 @@ export class RegisterComponent {
     this.passwordVisible.update(v => !v);
   }
 
+  toggleConfirmPasswordVisibility() {
+    this.confirmPasswordVisible.update(v => !v);
+  }
+
   toggleSecretCodeVisibility() {
     this.secretCodeVisible.update(v => !v);
   }
 
   onSubmit() {
     if (!this.email || !this.password || !this.name || !this.department) return;
+    if (this.password !== this.confirmPassword) return;
+    
     this.isLoading.set(true);
     
     this.authService.register(this.name, this.email, this.password, this.department, this.role, this.level, this.secretCode)

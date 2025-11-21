@@ -19,11 +19,17 @@ export class AiGreetingService {
 
   async getGreeting(): Promise<string> {
     const user = this.authService.currentUser();
-    const userName = user?.name.split(' ')[0] || 'Student';
-    const today = new Date().toISOString().split('T')[0];
-    const cacheKey = `flixy-greeting-${today}`;
+    if (!user) {
+        // Fallback for an unlikely edge case where user is not available
+        return `Welcome! Wishing you a wonderful day.`;
+    }
 
-    // Check for a cached greeting for the current day to avoid unnecessary API calls
+    const userName = user.name.split(' ')[0] || 'Student';
+    const today = new Date().toISOString().split('T')[0];
+    // FIX: The cache key is now user-specific by including the user's ID.
+    const cacheKey = `flixy-greeting-${user.id}-${today}`;
+
+    // Check for a cached greeting for the current day and user to avoid unnecessary API calls
     try {
         const cachedGreeting = localStorage.getItem(cacheKey);
         if (cachedGreeting) {
@@ -38,7 +44,7 @@ export class AiGreetingService {
       const response = await lastValueFrom(response$);
       const greeting = response.greeting;
 
-      // Cache the new greeting
+      // Cache the new greeting with the user-specific key
       try {
         localStorage.setItem(cacheKey, greeting);
       } catch (e) {
