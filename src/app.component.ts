@@ -4,7 +4,6 @@ import { NotificationComponent } from './components/notification/notification.co
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   template: `
     <router-outlet></router-outlet>
     <app-notification></app-notification>

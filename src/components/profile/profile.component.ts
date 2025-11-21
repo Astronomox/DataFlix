@@ -7,7 +7,6 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-profile',
-  standalone: true,
   templateUrl: './profile.component.html',
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,

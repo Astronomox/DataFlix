@@ -8,7 +8,6 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 
 @Component({
   selector: 'app-timetable',
-  standalone: true,
   templateUrl: './timetable.component.html',
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
