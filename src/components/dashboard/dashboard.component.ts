@@ -54,19 +54,24 @@ export class DashboardComponent implements OnInit {
 
   async loadDailyBriefing() {
     this.isLoadingGreeting.set(true);
-    const greetingPromise = this.aiGreetingService.getGreeting();
-    const schedulePromise = this.loadTodaysSchedule();
+    try {
+      const greetingPromise = this.aiGreetingService.getGreeting();
+      const schedulePromise = this.loadTodaysSchedule();
 
-    this.aiGreeting.set(await greetingPromise);
-    this.isLoadingGreeting.set(false);
-    
-    await schedulePromise;
+      this.aiGreeting.set(await greetingPromise);
+      await schedulePromise;
+    } catch (error) {
+      console.error("Error loading daily briefing:", error);
+      this.aiGreeting.set("Could not load your briefing at this time. Please check your connection.");
+    } finally {
+      this.isLoadingGreeting.set(false);
+    }
   }
 
   async loadTodaysSchedule() {
     const today = new Date();
-    const weekday: string[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const currentDay = weekday[today.getDay()];
+    // Using toLocaleDateString to get the full day name is more reliable than a manual array.
+    const currentDay = today.toLocaleDateString('en-US', { weekday: 'long' });
 
     const allEntries = await this.timetableService.getTimetable();
     const todayEntries = allEntries
