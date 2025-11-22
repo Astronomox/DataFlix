@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, computed, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -9,7 +9,334 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 @Component({
   selector: 'app-materials',
   standalone: true,
-  templateUrl: './materials.component.html',
+  template: `
+<div class="container mx-auto">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Course Materials</h1>
+      <p class="mt-1 text-gray-600 dark:text-gray-400">Browse, search, and download resources.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
+      <div class="relative flex-grow min-w-48">
+        <select 
+          (change)="onLevelChange($event)"
+          [ngModel]="selectedLevel()"
+          class="w-full pl-4 pr-10 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
+          <option [ngValue]="null">All Levels</option>
+          <option [value]="100">100 Level</option>
+          <option [value]="200">200 Level</option>
+          <option [value]="300">300 Level</option>
+          <option [value]="400">400 Level</option>
+          <option [value]="500">500 Level</option>
+          <option [value]="600">600 Level</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+          <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+        </div>
+      </div>
+      @if (isSuperAdmin) {
+        <div class="relative flex-grow min-w-48">
+          <select 
+            (change)="onDepartmentChange($event)"
+            class="w-full pl-4 pr-10 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none">
+            <option value="">All Departments</option>
+            @for(dept of allDepartments(); track dept) {
+              <option [value]="dept">{{dept}}</option>
+            }
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+          </div>
+        </div>
+      }
+      <div class="relative flex-grow">
+        <input 
+          type="text" 
+          placeholder="Search materials..."
+          (input)="onSearch($event)"
+          class="w-full pl-10 pr-4 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      </div>
+      @if (isAdmin) {
+        <input type="file" id="file-upload-input" class="hidden" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.xls,.xlsx,.txt,.rtf,.odt,.odp">
+        <label for="file-upload-input" class="cursor-pointer flex-shrink-0 bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <span>Upload</span>
+        </label>
+      }
+    </div>
+  </div>
+
+  <div class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg overflow-hidden">
+    @if(isLoading()) {
+      <div class="flex justify-center items-center p-16">
+        <svg class="animate-spin h-8 w-8 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+    } @else {
+      @if (filteredMaterials().length > 0) {
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
+          <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50/50 dark:bg-gray-700/50 dark:text-gray-400">
+              <tr>
+                <th scope="col" class="px-6 py-4">Title</th>
+                <th scope="col" class="px-6 py-4">Course</th>
+                <th scope="col" class="px-6 py-4">Level</th>
+                @if (isSuperAdmin) {
+                  <th scope="col" class="px-6 py-4">Department</th>
+                }
+                <th scope="col" class="px-6 py-4">Size</th>
+                <th scope="col" class="px-6 py-4">Uploaded</th>
+                <th scope="col" class="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (material of filteredMaterials(); track material.id) {
+                <tr class="border-b dark:border-gray-700 hover:bg-gray-50/30 dark:hover:bg-gray-600/30 transition-colors">
+                  <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white flex items-center gap-2">
+                    @if (material.type === 'pdf') { <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 0a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H4zm5 9a1 1 0 00-1 1v2a1 1 0 102 0v-2a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> }
+                    @if (material.type === 'doc' || material.type === 'docx') { <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 0a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H4zm4 10.5a.5.5 0 000-1H6.5a.5.5 0 000 1H8zm-1.5 2a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5zm-2-4a.5.5 0 000-1H4.5a.5.5 0 000 1h1.5z" clip-rule="evenodd"></path></svg> }
+                    @if (material.type === 'ppt' || material.type === 'pptx' || material.type === 'odp') { <svg class="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M4.632 3.533A2 2 0 016.577 2h6.846a2 2 0 011.945 1.533l1.976 8.234A3.489 3.489 0 0018 15.5a3.5 3.5 0 01-3.5 3.5H5.5A3.5 3.5 0 012 15.5a3.489 3.489 0 001.054-2.733l1.976-8.234z" /><path d="M12 14a2 2 0 100-4 2 2 0 000 4z" /></svg> }
+                    @if (material.type === 'zip') { <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-1 1v1H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2h-2V3a1 1 0 00-1-1H9zM8 6h4v2H8V6zm1-3v1h2V3H9z" clip-rule="evenodd"></path></svg> }
+                    @if (material.type === 'xls' || material.type === 'xlsx') { <svg class="w-5 h-5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path d="M2 3a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1-1H3a1 1 0 01-1-1V3zm3 2a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1H5zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm4-8a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1H9zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm4-8a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1h-2zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2z" /> </svg> }
+                    @if (material.type === 'txt' || material.type === 'rtf' || material.type === 'odt') { <svg class="w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm3 5a1 1 0 011-1h6a1 1 0 110 2H8a1 1 0 01-1-1zm-1 4a1 1 0 100 2h6a1 1 0 100-2H6z" clip-rule="evenodd" /> </svg> }
+                    {{ material.title }}
+                  </th>
+                  <td class="px-6 py-4">{{ material.course }}</td>
+                  <td class="px-6 py-4">{{ material.level ? material.level + ' Level' : 'All Levels' }}</td>
+                  @if (isSuperAdmin) {
+                    <td class="px-6 py-4">{{ material.department || 'All Departments' }}</td>
+                  }
+                  <td class="px-6 py-4">{{ material.size }}</td>
+                  <td class="px-6 py-4">{{ material.upload_date | date:'mediumDate' }}</td>
+                  <td class="px-6 py-4 text-right">
+                    <a [href]="material.file_url" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Download</a>
+                    @if (isAdmin) {
+                      <button (click)="openEditModal(material)" class="font-medium text-blue-600 dark:text-blue-500 hover:underline ml-4">Edit</button>
+                      <button (click)="openDeleteModal(material)" class="font-medium text-red-600 dark:text-red-500 hover:underline ml-4">Delete</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <!-- Mobile Card View -->
+        <div class="md:hidden p-4 space-y-4">
+          @for (material of filteredMaterials(); track material.id) {
+            <div class="bg-white/50 dark:bg-gray-700/50 rounded-xl p-4 shadow-md">
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                  @if (material.type === 'pdf') { <svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 0a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H4zm5 9a1 1 0 00-1 1v2a1 1 0 102 0v-2a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> }
+                  @if (material.type === 'doc' || material.type === 'docx') { <svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 0a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H4zm4 10.5a.5.5 0 000-1H6.5a.5.5 0 000 1H8zm-1.5 2a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5zm-2-4a.5.5 0 000-1H4.5a.5.5 0 000 1h1.5z" clip-rule="evenodd"></path></svg> }
+                  @if (material.type === 'ppt' || material.type === 'pptx' || material.type === 'odp') { <svg class="w-6 h-6 text-orange-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M4.632 3.533A2 2 0 016.577 2h6.846a2 2 0 011.945 1.533l1.976 8.234A3.489 3.489 0 0018 15.5a3.5 3.5 0 01-3.5 3.5H5.5A3.5 3.5 0 012 15.5a3.489 3.489 0 001.054-2.733l1.976-8.234z" /><path d="M12 14a2 2 0 100-4 2 2 0 000 4z" /></svg> }
+                  @if (material.type === 'zip') { <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-1 1v1H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2h-2V3a1 1 0 00-1-1H9zM8 6h4v2H8V6zm1-3v1h2V3H9z" clip-rule="evenodd"></path></svg> }
+                  @if (material.type === 'xls' || material.type === 'xlsx') { <svg class="w-6 h-6 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path d="M2 3a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1-1H3a1 1 0 01-1-1V3zm3 2a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1H5zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm4-8a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1H9zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm4-8a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1h-2zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2zm0 4a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2z" /> </svg> }
+                  @if (material.type === 'txt' || material.type === 'rtf' || material.type === 'odt') { <svg class="w-6 h-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm3 5a1 1 0 011-1h6a1 1 0 110 2H8a1 1 0 01-1-1zm-1 4a1 1 0 100 2h6a1 1 0 100-2H6z" clip-rule="evenodd" /> </svg> }
+                </div>
+                <div class="flex-grow">
+                  <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate">{{ material.title }}</h3>
+                  <div class="text-sm text-gray-600 dark:text-gray-300">
+                    <span class="font-semibold">{{ material.course }}</span>
+                    <span class="mx-1">·</span>
+                    <span>{{ material.size }}</span>
+                  </div>
+                   <div class="text-xs mt-1 font-semibold" [class.text-green-600]="material.level" [class.dark:text-green-400]="material.level" [class.text-purple-500]="!material.level" [class.dark:text-purple-400]="!material.level">{{ material.level ? material.level + ' Level' : 'All Levels' }}</div>
+                  @if (isSuperAdmin) {
+                    <div class="text-xs text-purple-500 dark:text-purple-400 mt-1">{{ material.department || 'All Departments' }}</div>
+                  }
+                </div>
+              </div>
+              <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-200/50 dark:border-gray-600/50">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ material.upload_date | date:'mediumDate' }}
+                </p>
+                <div class="flex items-center gap-2">
+                  <a [href]="material.file_url" target="_blank" rel="noopener noreferrer" class="font-semibold text-sm text-blue-600 dark:text-blue-400 hover:underline">Download</a>
+                  @if (isAdmin) {
+                    <button (click)="openEditModal(material)" class="font-semibold text-sm text-blue-600 dark:text-blue-400 hover:underline">Edit</button>
+                    <button (click)="openDeleteModal(material)" class="font-semibold text-sm text-red-600 dark:text-red-500 hover:underline">Delete</button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+          No materials found for the selected filters.
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Upload Modal -->
+@if (isUploadModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" (click)="cancelUpload()">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md" (click)="$event.stopPropagation()">
+      <div class="flex items-center gap-3 mb-4">
+        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Upload New Material</h3>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.5a.75.75 0 011.064 1.057l-.498.501-.002.002a4.5 4.5 0 01-6.364-6.364l7-7a4.5 4.5 0 016.368 6.36l-3.455 3.553A2.625 2.625 0 117.44 9.56l3.45-3.554a.75.75 0 111.064 1.06l-3.45 3.554a1.125 1.125 0 001.591 1.59l3.455-3.553a3 3 0 000-4.242z" clip-rule="evenodd" /></svg>
+        <span class="font-semibold">{{ fileToUpload()?.name }}</span>
+      </p>
+      
+      <form (ngSubmit)="confirmUpload()" #uploadForm="ngForm" class="space-y-4">
+        @if (isSuperAdmin) {
+          <div>
+            <label for="materialDepartment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
+            <select id="materialDepartment" name="department" 
+              [ngModel]="newMaterialDepartment()" 
+              (ngModelChange)="newMaterialDepartment.set($event)" 
+              required 
+              class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+              <option value="" disabled>Select a department</option>
+              <option [ngValue]="null">All Departments</option>
+              @for(dept of allDepartments(); track dept) {
+                <option [value]="dept">{{dept}}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label for="materialLevel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
+            <select id="materialLevel" name="level" [ngModel]="newMaterialLevel()" (ngModelChange)="newMaterialLevel.set($event)"
+              class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+              <option [ngValue]="null">All Levels</option>
+              <option [ngValue]="100">100 Level</option>
+              <option [ngValue]="200">200 Level</option>
+              <option [ngValue]="300">300 Level</option>
+              <option [ngValue]="400">400 Level</option>
+              <option [ngValue]="500">500 Level</option>
+              <option [ngValue]="600">600 Level</option>
+            </select>
+          </div>
+        } @else {
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
+            <input type="text" 
+              [value]="authService.currentUser()?.level + ' Level'" 
+              disabled
+              class="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed">
+          </div>
+        }
+        <div>
+          <label for="materialTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+          <input type="text" id="materialTitle" name="title" [ngModel]="newMaterialTitle()" (ngModelChange)="newMaterialTitle.set($event)" required
+            class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+        </div>
+        <div>
+          <label for="materialCourse" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Code</label>
+          <input type="text" id="materialCourse" name="course" [ngModel]="newMaterialCourse()" (ngModelChange)="newMaterialCourse.set($event)" required placeholder="e.g., CS101"
+            class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+        </div>
+        <div class="flex justify-end space-x-4 pt-4">
+          <button type="button" (click)="cancelUpload()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="uploadForm.invalid" class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50">
+            Confirm & Upload
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Edit Modal -->
+@if (isEditModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" (click)="closeEditModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md" (click)="$event.stopPropagation()">
+      <div class="flex items-center gap-3 mb-4">
+        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Edit Material</h3>
+      </div>
+       <form (ngSubmit)="confirmEdit()" #editForm="ngForm" class="space-y-4">
+        @if (isSuperAdmin) {
+          <div>
+            <label for="editMaterialDepartment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
+            <select id="editMaterialDepartment" name="department" [(ngModel)]="editableMaterial.department" required 
+              class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+              <option [ngValue]="null">All Departments</option>
+              @for(dept of allDepartments(); track dept) {
+                <option [value]="dept">{{dept}}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label for="editMaterialLevel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
+            <select id="editMaterialLevel" name="level" [(ngModel)]="editableMaterial.level"
+              class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+              <option [ngValue]="null">All Levels</option>
+              <option [ngValue]="100">100 Level</option>
+              <option [ngValue]="200">200 Level</option>
+              <option [ngValue]="300">300 Level</option>
+              <option [ngValue]="400">400 Level</option>
+              <option [ngValue]="500">500 Level</option>
+              <option [ngValue]="600">600 Level</option>
+            </select>
+          </div>
+        }
+        <div>
+          <label for="editMaterialTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+          <input type="text" id="editMaterialTitle" name="title" [(ngModel)]="editableMaterial.title" required
+            class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+        </div>
+        <div>
+          <label for="editMaterialCourse" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Code</label>
+          <input type="text" id="editMaterialCourse" name="course" [(ngModel)]="editableMaterial.course" required placeholder="e.g., CS101"
+            class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+        </div>
+        <div class="flex justify-end space-x-4 pt-4">
+          <button type="button" (click)="closeEditModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="editForm.invalid" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+
+<!-- Delete Confirmation Modal -->
+@if (isDeleteModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" (click)="closeDeleteModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md" (click)="$event.stopPropagation()">
+      <div class="sm:flex sm:items-start">
+        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 sm:mx-0 sm:h-10 sm:w-10">
+          <svg class="h-6 w-6 text-red-600 dark:text-red-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+          <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white">Delete Material</h3>
+          <div class="mt-2">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Are you sure you want to delete <span class="font-semibold">{{ materialToDelete()?.title }}</span>? This action cannot be undone.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+        <button (click)="confirmDelete()" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+          Confirm Delete
+        </button>
+        <button (click)="closeDeleteModal()" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 sm:mt-0 sm:w-auto sm:text-sm">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+}
+`,
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -17,7 +344,7 @@ export class MaterialsComponent implements OnInit {
   authService = inject(AuthService);
   notificationService = inject(NotificationService);
   materialsService = inject(MaterialsService);
-  
+
   isAdmin = this.authService.isAdmin();
   isSuperAdmin = this.authService.isSuperAdmin();
   isLoading = signal(true);
@@ -37,11 +364,16 @@ export class MaterialsComponent implements OnInit {
   // Edit modal state
   isEditModalOpen = signal(false);
   materialToEdit = signal<Material | null>(null);
-  editableMaterial = {
+  editableMaterial: {
+    title: string;
+    course: string;
+    level: number | null;
+    department: string | null;
+  } = {
     title: '',
     course: '',
-    level: null as number | null,
-    department: null as string | null
+    level: null,
+    department: null
   };
 
   // Delete modal state
@@ -54,27 +386,28 @@ export class MaterialsComponent implements OnInit {
     const term = this.searchTerm().toLowerCase();
     const dept = this.selectedDepartment();
     const level = this.selectedLevel();
+
     let materials = this.allMaterials();
 
     if (this.isSuperAdmin && dept) {
       materials = materials.filter(m => m.department === dept);
     }
-    
+
     if (level) {
-      // Show materials for the specific level OR materials for all levels
-      materials = materials.filter(m => m.level === level || !m.level);
+      // Strictly filter by the selected level. Materials for "All Levels" are not included.
+      materials = materials.filter(m => m.level === level);
+    }
+    
+    if (!term) {
+        return materials;
     }
 
-    if (!term) {
-      return materials;
-    }
-    return materials.filter(
-      material =>
-        material.title.toLowerCase().includes(term) ||
-        material.course.toLowerCase().includes(term)
+    return materials.filter(material =>
+      material.title.toLowerCase().includes(term) ||
+      material.course.toLowerCase().includes(term)
     );
   });
-  
+
   ngOnInit() {
     this.loadMaterials();
     if (this.isSuperAdmin) {
@@ -97,7 +430,7 @@ export class MaterialsComponent implements OnInit {
   onDepartmentChange(event: Event) {
     this.selectedDepartment.set((event.target as HTMLSelectElement).value);
   }
-  
+
   onLevelChange(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.selectedLevel.set(value ? Number(value) : null);
@@ -135,35 +468,35 @@ export class MaterialsComponent implements OnInit {
   async confirmUpload() {
     const user = this.authService.currentUser();
     if (!user) return;
-
+    
     const file = this.fileToUpload();
     if (!file || !this.newMaterialTitle() || !this.newMaterialCourse()) {
       this.notificationService.show('Title and Course are required.', 'warning');
       return;
     }
-    
-    const levelForUpload = (this.isAdmin && !this.isSuperAdmin) 
-        ? user.level 
-        : this.newMaterialLevel();
-    
+
+    const levelForUpload = (this.isAdmin && !this.isSuperAdmin)
+      ? user.level
+      : this.newMaterialLevel();
+      
     const departmentForUpload = this.isSuperAdmin
       ? this.newMaterialDepartment()
       : user.department;
 
     if (this.isSuperAdmin && departmentForUpload === '') {
-      this.notificationService.show('As Super Admin, you must select a department or "All Departments".', 'warning');
-      return;
+        this.notificationService.show('As Super Admin, you must select a department or "All Departments".', 'warning');
+        return;
     }
-    
+
     const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
     const supportedTypes = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'zip', 'xls', 'xlsx', 'txt', 'rtf', 'odt', 'odp'];
-    
+
     if (!supportedTypes.includes(fileExtension)) {
       this.notificationService.show(`Unsupported file type: .${fileExtension}`, 'error');
       return;
     }
-
-    const newMaterialData: any = {
+    
+    const newMaterialData = {
       title: this.newMaterialTitle(),
       course: this.newMaterialCourse(),
       level: levelForUpload,
@@ -172,7 +505,6 @@ export class MaterialsComponent implements OnInit {
     };
 
     const uploadedMaterial = await this.materialsService.uploadMaterial(newMaterialData, file, departmentForUpload);
-    
     if (uploadedMaterial) {
       this.allMaterials.update(m => [uploadedMaterial, ...m]);
       this.notificationService.show('Material uploaded successfully.', 'success');
@@ -182,7 +514,7 @@ export class MaterialsComponent implements OnInit {
 
   private deleteMaterial(material: Material) {
     this.materialsService.deleteMaterial(material).then((success) => {
-      if(success) {
+      if (success) {
         this.allMaterials.update(materials => materials.filter(m => m.id !== material.id));
         this.notificationService.show('Material deleted successfully.', 'success');
       }
@@ -193,14 +525,14 @@ export class MaterialsComponent implements OnInit {
   openEditModal(material: Material) {
     this.materialToEdit.set(material);
     this.editableMaterial = {
-      title: material.title,
-      course: material.course,
-      level: material.level ?? null,
-      department: material.department ?? null,
+        title: material.title,
+        course: material.course,
+        level: material.level ?? null,
+        department: material.department ?? null,
     };
     this.isEditModalOpen.set(true);
   }
-
+  
   closeEditModal() {
     this.isEditModalOpen.set(false);
     this.materialToEdit.set(null);
@@ -225,7 +557,7 @@ export class MaterialsComponent implements OnInit {
     }
 
     const updatedMaterial = await this.materialsService.updateMaterial(material.id, updates);
-
+    
     if (updatedMaterial) {
         this.allMaterials.update(materials => materials.map(m => m.id === updatedMaterial.id ? updatedMaterial : m));
         this.notificationService.show('Material updated successfully.', 'success');

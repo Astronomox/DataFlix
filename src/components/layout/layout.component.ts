@@ -6,7 +6,23 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 @Component({
   selector: 'app-layout',
   standalone: true,
-  templateUrl: './layout.component.html',
+  template: `
+<div class="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+  <app-sidebar [isOpen]="isSidebarOpen()"></app-sidebar>
+  
+  <!-- Overlay for mobile when sidebar is open -->
+  @if (isSidebarOpen()) {
+    <div (click)="toggleSidebar()" class="fixed inset-0 z-30 bg-black/60 transition-opacity duration-300" aria-hidden="true"></div>
+  }
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <app-header (sidebarToggle)="toggleSidebar()"></app-header>
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+`,
   imports: [RouterOutlet, HeaderComponent, SidebarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -131,9 +131,9 @@
       </svg>
     </div>
   } @else {
-    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
       @for(day of weekdays; track day; let i = $index) {
-        @let dayColor = ['border-blue-500', 'border-green-500', 'border-yellow-500', 'border-red-500', 'border-indigo-500'][i];
+        @let dayColor = ['border-blue-500', 'border-green-500', 'border-yellow-500', 'border-red-500', 'border-indigo-500', 'border-orange-500'][i];
         <div class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-4 flex flex-col border-t-4" [class]="dayColor">
           <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white">{{ day }}</h2>
           <div class="flex-grow space-y-3">

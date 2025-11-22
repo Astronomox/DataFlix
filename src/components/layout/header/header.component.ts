@@ -6,7 +6,39 @@ import { ThemeService } from '../../../services/theme.service';
 @Component({
   selector: 'app-header',
   standalone: true,
-  templateUrl: './header.component.html',
+  template: `
+<header class="relative flex items-center justify-between p-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
+  <button (click)="sidebarToggle.emit()" class="text-gray-500 dark:text-gray-400 focus:outline-none">
+    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  </button>
+  <div class="flex-1"></div>
+  <div class="flex items-center space-x-4">
+    <button (click)="toggleTheme()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+      @if (themeService.theme() === 'dark') {
+        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+      } @else {
+        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+      }
+    </button>
+    <div class="relative">
+      @if (currentUser(); as user) {
+        <div class="flex items-center space-x-2">
+           <img class="w-10 h-10 rounded-full object-cover" [src]="userAvatarUrl()" alt="User Avatar">
+           <div class="hidden md:block">
+            <p class="font-semibold text-sm">{{ user.name }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">{{ user.role }}</p>
+           </div>
+        </div>
+      }
+    </div>
+    <button (click)="logout()" title="Logout" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+      <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+    </button>
+  </div>
+</header>
+`,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

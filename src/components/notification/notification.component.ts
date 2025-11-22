@@ -5,7 +5,69 @@ import { NotificationService } from '../../services/notification.service';
 @Component({
   selector: 'app-notification',
   standalone: true,
-  templateUrl: './notification.component.html',
+  template: `
+<div class="fixed top-5 right-5 z-50 flex flex-col items-end space-y-3">
+  @for (notification of notifications(); track notification.id) {
+    <div
+      class="flex items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white divide-x divide-gray-200 rounded-lg shadow-lg dark:text-gray-400 dark:divide-gray-700 dark:bg-gray-800 transition-all duration-300 animate-fade-in-right"
+      role="alert"
+    >
+      @switch (notification.type) {
+        @case ('success') {
+          <div class="flex-shrink-0 p-2 rounded-full bg-green-500">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+            </svg>
+          </div>
+        }
+        @case ('error') {
+          <div class="flex-shrink-0 p-2 rounded-full bg-red-500">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
+            </svg>
+          </div>
+        }
+        @case ('info') {
+          <div class="flex-shrink-0 p-2 rounded-full bg-blue-500">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path>
+            </svg>
+          </div>
+        }
+        @case ('warning') {
+          <div class="flex-shrink-0 p-2 rounded-full bg-yellow-500">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path>
+            </svg>
+          </div>
+        }
+      }
+      
+      <div class="pl-4 text-sm font-normal">{{ notification.message }}</div>
+       <button (click)="close(notification.id)" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" type="button" aria-label="Close">
+        <span class="sr-only">Close</span>
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+      </button>
+    </div>
+  }
+</div>
+
+<style>
+  @keyframes fade-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .animate-fade-in-right {
+    animation: fade-in-right 0.5s ease-out forwards;
+  }
+</style>
+`,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

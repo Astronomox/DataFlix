@@ -8,23 +8,24 @@ Built with the latest version of Angular and powered by signals, the application
 
 ## ✨ Features
 
-### For All Users
+### For Students
 - **Secure Authentication:** Robust login, registration, and secure password reset flow.
-- **Personalized Dashboard:** A welcoming dashboard that displays a unique motivational quote daily and provides quick access to key features.
-- **AI Daily Briefing:** An AI assistant ("Flixy") powered by the Gemini API that provides a warm, personalized greeting and a summary of the user's schedule for the day.
-- **Course Materials:** Browse, search, and download course materials. Materials can be filtered by academic level and department.
+- **Personalized Dashboard:** A welcoming dashboard that displays a unique motivational quote daily, a dismissible AI-powered daily briefing, and provides quick access to key features.
+- **AI Daily Briefing:** An AI assistant ("Flixy") that provides a warm, personalized greeting and a summary of the user's schedule for the day, accessible on the dashboard or a dedicated page.
+- **Course Materials:** Browse, search, and download course materials. Materials are intelligently filtered by the student's level and department.
 - **Weekly Timetable:** A clear, organized view of the weekly class schedule, with powerful filtering options.
-- **Announcements:** Stay updated with the latest news and announcements from the university or specific departments.
+- **Announcements:** Stay updated with the latest news and announcements relevant to your department and level.
 - **Profile Management:** Users can view and edit their personal profile, including their name, academic level, and profile picture.
 - **Dark Mode:** A beautiful, persistent dark mode for comfortable viewing in low-light conditions.
 - **Contact Form:** A functional contact form for users to report issues or send feedback, powered by a secure serverless function and the Resend email service.
 
 ### For Administrators
+- **Dedicated Admin Dashboard:** A powerful dashboard providing an at-a-glance overview of portal activity, including user statistics (total, students, admins) and feeds of recent uploads and announcements.
 - **Role-Based Access Control (RBAC):**
   - **Basic Admins:** Can upload, edit, and delete content (materials, timetable entries, announcements) but are restricted to their own department and academic level.
   - **Super Admins:** Have full control over all content across all departments and levels.
 - **Content Management:** Intuitive modals for uploading, editing, and deleting all types of content.
-- **Targeted Communication:** Ability to post announcements and content for specific academic levels, specific departments, or broadcast to everyone.
+- **Targeted Communication:** Ability to post announcements and content for specific academic levels, specific departments, or broadcast to everyone ("All Levels" / "All Departments").
 
 ## 🚀 Tech Stack
 
@@ -46,14 +47,14 @@ Follow these steps to set up the project for local development or deploy it to V
 Your Supabase project is the backend for this application.
 
 1.  **Create a Project:** Go to [supabase.com](https://supabase.com), sign up for a free account, and create a new project.
-2.  **Run SQL Schema:** Navigate to the **SQL Editor** in your Supabase project dashboard. Click **"New query"** and paste the entire content of the schema below. Click **"RUN"**. This will create all the necessary tables and policies.
+2.  **Run SQL Schema:** Navigate to the **SQL Editor** in your Supabase project dashboard. Click **"New query"** and paste the entire content of the schema below. This script is **idempotent**, meaning it is safe to run on both new and existing databases. Click **"RUN"**.
 3.  **Get API Keys:** Go to **Project Settings > API**. You will need the **Project URL** and the **`anon` Public Key**.
 
-#### **Complete Supabase SQL Schema**
+#### **Complete & Safe Supabase SQL Schema**
 
 ```sql
--- Create the 'users' table to store public user profiles
-CREATE TABLE public.users (
+-- Create the 'users' table ONLY if it doesn't already exist
+CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
@@ -68,61 +69,82 @@ CREATE TABLE public.users (
 -- Enable Row Level Security (RLS) for the users table
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- Policy: Allow users to view their own profile
-CREATE POLICY "Allow individual read access"
-ON public.users FOR SELECT
-USING (auth.uid() = id);
+-- **FIX FOR RECURSION ERROR**
+-- Create a helper function to get the current user's role.
+-- This function runs with the privileges of the user who created it,
+-- bypassing RLS and thus preventing infinite recursion on the 'users' table.
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS TEXT AS $$
+BEGIN
+  RETURN (SELECT role FROM public.users WHERE id = auth.uid());
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Policy: Allow users to update their own profile
-CREATE POLICY "Allow individual update access"
-ON public.users FOR UPDATE
-USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
+-- Safely create policies for the users table
+DROP POLICY IF EXISTS "Allow individual read access" ON public.users;
+CREATE POLICY "Allow individual read access" ON public.users FOR SELECT USING (auth.uid() = id);
 
--- Function to automatically insert a new user into the public.users table upon registration
+DROP POLICY IF EXISTS "Allow individual update access" ON public.users;
+CREATE POLICY "Allow individual update access" ON public.users FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
+-- **POLICY FOR ADMIN DASHBOARD (FIXED)**
+DROP POLICY IF EXISTS "Allow admin read access" ON public.users;
+CREATE POLICY "Allow admin read access" ON public.users FOR SELECT USING (public.get_my_role() = 'admin');
+
+
+-- This robust function handles creating a user profile from the metadata
+-- provided during signup. It is idempotent and safe to run again.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, name, email, role, department, level)
-  VALUES (
-    new.id,
-    new.raw_user_meta_data->>'name',
-    new.email,
-    new.raw_user_meta_data->>'role',
-    new.raw_user_meta_data->>'department',
-    (new.raw_user_meta_data->>'level')::INT
-  );
+  -- This function is triggered on both user INSERT (signup) and UPDATE.
+  -- The app's logic first signs up the user (INSERT) and then immediately updates them with metadata.
+  -- This check ensures we only create a profile row if one doesn't exist AND
+  -- if the necessary metadata (like 'name') is present, which only happens on the UPDATE trigger.
+  -- This prevents the INSERT trigger from failing due to missing data.
+  IF NOT EXISTS (SELECT 1 FROM public.users WHERE id = new.id) AND new.raw_user_meta_data->>'name' IS NOT NULL THEN
+    INSERT INTO public.users (id, name, email, role, department, level)
+    VALUES (
+      new.id,
+      new.raw_user_meta_data->>'name',
+      new.email,
+      COALESCE(new.raw_user_meta_data->>'role', 'student'),
+      new.raw_user_meta_data->>'department',
+      COALESCE((new.raw_user_meta_data->>'level')::INT, 100)
+    );
+  END IF;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger to execute the function after a new user signs up in Supabase Auth
-CREATE TRIGGER on_auth_user_created
-AFTER INSERT ON auth.users
+-- Safely drop old triggers to avoid conflicts
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_changed ON auth.users;
+
+-- This trigger now runs on both INSERT and UPDATE of an auth.users record.
+CREATE TRIGGER on_auth_user_changed
+AFTER INSERT OR UPDATE ON auth.users
 FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 
--- Create storage bucket for user avatars
+-- Create storage bucket for user avatars (safe if it already exists)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('avatars', 'avatars', TRUE)
 ON CONFLICT (id) DO NOTHING;
 
--- Policies for avatar storage: Allow users to manage their own avatars
-CREATE POLICY "Allow individual avatar access"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'avatars' AND auth.uid() = owner);
+-- Safely create policies for avatar storage
+DROP POLICY IF EXISTS "Allow individual avatar access" ON storage.objects;
+CREATE POLICY "Allow individual avatar access" ON storage.objects FOR SELECT USING (bucket_id = 'avatars' AND auth.uid() = owner);
 
-CREATE POLICY "Allow individual avatar upload"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'avatars' AND auth.uid() = owner);
+DROP POLICY IF EXISTS "Allow individual avatar upload" ON storage.objects;
+CREATE POLICY "Allow individual avatar upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'avatars' AND auth.uid() = owner);
 
-CREATE POLICY "Allow individual avatar update"
-ON storage.objects FOR UPDATE
-USING (bucket_id = 'avatars' AND auth.uid() = owner);
+DROP POLICY IF EXISTS "Allow individual avatar update" ON storage.objects;
+CREATE POLICY "Allow individual avatar update" ON storage.objects FOR UPDATE USING (bucket_id = 'avatars' AND auth.uid() = owner);
 
 
--- Create the 'materials' table
-CREATE TABLE public.materials (
+-- Create the 'materials' table ONLY if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.materials (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   course TEXT NOT NULL,
@@ -137,42 +159,29 @@ CREATE TABLE public.materials (
 -- Enable RLS for materials
 ALTER TABLE public.materials ENABLE ROW LEVEL SECURITY;
 
--- Policy: Allow authenticated users to view materials
-CREATE POLICY "Allow read access to materials"
-ON public.materials FOR SELECT
-USING (auth.role() = 'authenticated');
+-- Safely create policies for materials
+DROP POLICY IF EXISTS "Allow read access to materials" ON public.materials;
+CREATE POLICY "Allow read access to materials" ON public.materials FOR SELECT USING (auth.role() = 'authenticated');
 
--- Policy: Allow admins to insert, update, and delete materials
-CREATE POLICY "Allow admin full access to materials"
-ON public.materials FOR ALL
-USING (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'admin'
-)
-WITH CHECK (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'admin'
-);
+DROP POLICY IF EXISTS "Allow admin full access to materials" ON public.materials;
+CREATE POLICY "Allow admin full access to materials" ON public.materials FOR ALL USING (public.get_my_role() = 'admin') WITH CHECK (public.get_my_role() = 'admin');
 
 
--- Create storage bucket for course materials
+-- Create storage bucket for course materials (safe if it exists)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('materials', 'materials', TRUE)
 ON CONFLICT (id) DO NOTHING;
 
--- Policies for material storage
-CREATE POLICY "Allow authenticated read access to materials storage"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'materials');
+-- Safely create policies for material storage
+DROP POLICY IF EXISTS "Allow authenticated read access to materials storage" ON storage.objects;
+CREATE POLICY "Allow authenticated read access to materials storage" ON storage.objects FOR SELECT USING (bucket_id = 'materials');
 
-CREATE POLICY "Allow admin full access to materials storage"
-ON storage.objects FOR ALL
-USING (
-  bucket_id = 'materials' AND
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'admin'
-);
+DROP POLICY IF EXISTS "Allow admin full access to materials storage" ON storage.objects;
+CREATE POLICY "Allow admin full access to materials storage" ON storage.objects FOR ALL USING (bucket_id = 'materials' AND public.get_my_role() = 'admin');
 
 
--- Create the 'timetable' table
-CREATE TABLE public.timetable (
+-- Create the 'timetable' table ONLY if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.timetable (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   day TEXT NOT NULL,
   time TEXT NOT NULL,
@@ -185,21 +194,16 @@ CREATE TABLE public.timetable (
 -- Enable RLS for timetable
 ALTER TABLE public.timetable ENABLE ROW LEVEL SECURITY;
 
--- Policy: Allow authenticated users to view timetable
-CREATE POLICY "Allow read access to timetable"
-ON public.timetable FOR SELECT
-USING (auth.role() = 'authenticated');
+-- Safely create policies for timetable
+DROP POLICY IF EXISTS "Allow read access to timetable" ON public.timetable;
+CREATE POLICY "Allow read access to timetable" ON public.timetable FOR SELECT USING (auth.role() = 'authenticated');
 
--- Policy: Allow admins full access to timetable
-CREATE POLICY "Allow admin full access to timetable"
-ON public.timetable FOR ALL
-USING (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'admin'
-);
+DROP POLICY IF EXISTS "Allow admin full access to timetable" ON public.timetable;
+CREATE POLICY "Allow admin full access to timetable" ON public.timetable FOR ALL USING (public.get_my_role() = 'admin');
 
 
--- Create the 'announcements' table
-CREATE TABLE public.announcements (
+-- Create the 'announcements' table ONLY if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.announcements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -212,17 +216,12 @@ CREATE TABLE public.announcements (
 -- Enable RLS for announcements
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
 
--- Policy: Allow authenticated users to view announcements
-CREATE POLICY "Allow read access to announcements"
-ON public.announcements FOR SELECT
-USING (auth.role() = 'authenticated');
+-- Safely create policies for announcements
+DROP POLICY IF EXISTS "Allow read access to announcements" ON public.announcements;
+CREATE POLICY "Allow read access to announcements" ON public.announcements FOR SELECT USING (auth.role() = 'authenticated');
 
--- Policy: Allow admins full access to announcements
-CREATE POLICY "Allow admin full access to announcements"
-ON public.announcements FOR ALL
-USING (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'admin'
-);
+DROP POLICY IF EXISTS "Allow admin full access to announcements" ON public.announcements;
+CREATE POLICY "Allow admin full access to announcements" ON public.announcements FOR ALL USING (public.get_my_role() = 'admin');
 ```
 
 ---

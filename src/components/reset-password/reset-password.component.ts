@@ -9,7 +9,82 @@ import { NotificationService } from '../../services/notification.service';
   selector: 'app-reset-password',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './reset-password.component.html',
+  template: `
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-slate-900 p-4">
+      <div class="w-full max-w-md">
+        <div class="bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl border border-white/30 dark:border-gray-700/30 rounded-2xl shadow-2xl p-8 text-white">
+          <h1 class="text-4xl font-bold text-center mb-2">Set New Password</h1>
+          <p class="text-center text-gray-200 mb-8">Choose a new password for your account.</p>
+          
+          <form (ngSubmit)="onSubmit()" #resetPasswordForm="ngForm">
+            <div class="mb-4">
+              <label for="password" class="block text-sm font-medium text-gray-200 mb-2">New Password</label>
+              <div class="relative">
+                <input 
+                  [type]="passwordVisible() ? 'text' : 'password'"
+                  id="password"
+                  name="password"
+                  [(ngModel)]="password"
+                  required
+                  minlength="6"
+                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-white/50 focus:outline-none placeholder-gray-400 transition pr-10"
+                  placeholder="••••••••">
+                  <button type="button" (click)="togglePasswordVisibility()" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-300 hover:text-white">
+                    @if (passwordVisible()) {
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    } @else {
+                      <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064 7 9.542-7 .847 0 1.67 .11 2.458 .315M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 3.464V12a9.956 9.956 0 00-5.464-1.536M3 3l18 18" /></svg>
+                    }
+                  </button>
+              </div>
+            </div>
+             <div class="mb-6">
+              <label for="confirmPassword" class="block text-sm font-medium text-gray-200 mb-2">Confirm New Password</label>
+              <input 
+                [type]="passwordVisible() ? 'text' : 'password'"
+                id="confirmPassword"
+                name="confirmPassword"
+                [(ngModel)]="confirmPassword"
+                required
+                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-white/50 focus:outline-none placeholder-gray-400 transition"
+                placeholder="••••••••">
+            </div>
+
+            @if(password && confirmPassword && password !== confirmPassword) {
+              <p class="text-red-400 text-sm text-center mb-4">Passwords do not match.</p>
+            }
+            @if(password && confirmPassword && password === confirmPassword && password.length >= 6) {
+              <p class="text-green-400 text-sm text-center mb-4 flex items-center justify-center gap-1">
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                </svg>
+                <span>Passwords match.</span>
+              </p>
+            }
+            
+            <button 
+              type="submit" 
+              [disabled]="isLoading() || resetPasswordForm.invalid || password !== confirmPassword"
+              class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:from-purple-600 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                @if(isLoading()) {
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Updating Password...</span>
+                } @else {
+                  <span>Update Password</span>
+                }
+            </button>
+          </form>
+
+          <div class="mt-6 text-center text-sm text-gray-300">
+            <p>Remember your password? <a routerLink="/login" class="font-semibold text-white hover:underline">Sign In</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResetPasswordComponent {

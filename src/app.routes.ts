@@ -27,7 +27,8 @@ export const APP_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { 
         path: 'dashboard',
-        loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
+        // This now points to the dispatcher component
+        loadComponent: () => import('./components/dashboard/dashboard-dispatcher.component').then(m => m.DashboardDispatcherComponent)
       },
       { 
         path: 'ai-briefing',

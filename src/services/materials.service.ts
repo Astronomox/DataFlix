@@ -73,6 +73,23 @@ export class MaterialsService {
     return this.materialsPromise;
   }
 
+  async getRecentMaterials(limit: number): Promise<Material[]> {
+    try {
+      const { data, error } = await supabase
+        .from('materials')
+        .select('*')
+        .order('upload_date', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data as Material[];
+    } catch (error: any) {
+      console.error("Error fetching recent materials:", error.message);
+      this.notificationService.show('Could not fetch recent uploads.', 'error');
+      return [];
+    }
+  }
+
   async updateMaterial(id: string, updates: Partial<Omit<Material, 'id'>>): Promise<Material | null> {
     try {
         const { data, error } = await supabase
@@ -124,8 +141,14 @@ export class MaterialsService {
       return null;
     }
     
-    const departmentPath = department?.replace(/[\s/\\?%*:|"<>]/g, '_') ?? 'All_Departments';
-    const filePath = `${departmentPath}/${newMaterialData.course.replace(/\s+/g, '_')}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    // Helper function to sanitize strings for use in file paths.
+    // Replaces whitespace and common invalid characters with an underscore.
+    const sanitizeForPath = (str: string) => str.replace(/[\s/\\?%*:|"<>]/g, '_');
+    
+    const departmentPath = sanitizeForPath(department ?? 'All_Departments');
+    const coursePath = sanitizeForPath(newMaterialData.course);
+    const sanitizedFileName = sanitizeForPath(file.name);
+    const filePath = `${departmentPath}/${coursePath}/${Date.now()}_${sanitizedFileName}`;
     
     try {
       const { error: uploadError } = await supabase.storage
@@ -157,8 +180,15 @@ export class MaterialsService {
       return { ...data, file_url: publicUrl } as Material;
 
     } catch (error: any) {
-      console.error("Error uploading material:", error.message);
-      this.notificationService.show(error.message || 'Failed to upload material. Please try again.', 'error');
+      console.error("Error uploading material:", error); // Log the full error object for more context
+      let errorMessage = error.message || 'Failed to upload material. Please try again.';
+      
+      // Provide a more helpful message for the common "Failed to fetch" CORS error.
+      if (errorMessage.toLowerCase().includes('failed to fetch')) {
+        errorMessage = 'Upload failed due to a network error. This is often a CORS issue. Please verify your Supabase project\'s CORS settings.';
+      }
+      
+      this.notificationService.show(errorMessage, 'error', 8000); // Increased duration for readability
       return null;
     }
   }

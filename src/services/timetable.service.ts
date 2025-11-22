@@ -3,7 +3,7 @@ import { supabase } from '../supabase.config';
 import { NotificationService } from './notification.service';
 import { AuthService } from './auth.service';
 
-export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
 
 export interface TimetableEntry {
   id: string;

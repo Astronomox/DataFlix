@@ -1,0 +1,116 @@
+<div class="container mx-auto">
+  @if (currentUser(); as user) {
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white">
+      Admin Dashboard
+    </h1>
+    <p class="mt-1 text-gray-600 dark:text-gray-400">Welcome, {{ user.name }}. Here's an overview of the portal.</p>
+  }
+
+  @if (isLoading()) {
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        @for (_ of [1,2,3]; track $index) {
+            <div class="h-32 bg-gray-200 dark:bg-gray-700/50 rounded-2xl animate-pulse"></div>
+        }
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <div class="h-96 bg-gray-200 dark:bg-gray-700/50 rounded-2xl animate-pulse"></div>
+        <div class="h-96 bg-gray-200 dark:bg-gray-700/50 rounded-2xl animate-pulse"></div>
+    </div>
+  } @else {
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+      <!-- Total Users -->
+      <div class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
+        <div class="flex items-center space-x-4">
+          <div class="p-3 bg-blue-500/20 rounded-xl flex items-center justify-center">
+            <svg class="w-8 h-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-white">{{ stats().totalUsers }}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
+          </div>
+        </div>
+      </div>
+       <!-- Students -->
+      <div class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
+        <div class="flex items-center space-x-4">
+          <div class="p-3 bg-green-500/20 rounded-xl flex items-center justify-center">
+            <svg class="w-8 h-8 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.838l8.57 3.908a2 2 0 0 0 1.66 0l8.59-3.908Z"/>
+              <path d="M6 12v4c0 4.5 3 5 6 5s6-.5 6-5v-4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-white">{{ stats().studentCount }}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Students</p>
+          </div>
+        </div>
+      </div>
+       <!-- Administrators -->
+      <div class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
+        <div class="flex items-center space-x-4">
+          <div class="p-3 bg-purple-500/20 rounded-xl flex items-center justify-center">
+             <svg class="w-8 h-8 text-purple-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-white">{{ stats().adminCount }}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Administrators</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <!-- Recent Uploads -->
+        <div class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Recent Uploads</h3>
+                <a routerLink="/materials" class="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:underline">View All</a>
+            </div>
+            <ul class="space-y-3">
+                @for(material of recentMaterials(); track material.id) {
+                    <li class="p-3 bg-white/20 dark:bg-gray-700/30 rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-gray-800 dark:text-gray-200">{{ material.title }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ material.course }}</p>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ material.upload_date | date:'shortDate' }}</span>
+                    </li>
+                } @empty {
+                    <li class="p-3 text-center text-gray-500 dark:text-gray-400">No materials have been uploaded yet.</li>
+                }
+            </ul>
+        </div>
+
+        <!-- Recent Announcements -->
+         <div class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Recent Announcements</h3>
+                <a routerLink="/announcements" class="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:underline">View All</a>
+            </div>
+            <ul class="space-y-3">
+                @for(announcement of recentAnnouncements(); track announcement.id) {
+                    <li class="p-3 bg-white/20 dark:bg-gray-700/30 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <p class="font-semibold text-gray-800 dark:text-gray-200">{{ announcement.title }}</p>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ announcement.date | date:'shortDate' }}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">by {{ announcement.author }}</p>
+                    </li>
+                } @empty {
+                     <li class="p-3 text-center text-gray-500 dark:text-gray-400">No announcements have been posted yet.</li>
+                }
+            </ul>
+        </div>
+    </div>
+  }
+</div>

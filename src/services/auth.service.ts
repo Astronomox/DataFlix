@@ -61,7 +61,9 @@ export class AuthService {
         .eq('id', supabaseUser.id)
         .single();
   
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') { // PGRST116 means "single() row not found" which we will handle.
+          throw error;
+      }
   
       if (data) {
         const userWithFaculty: User = {
@@ -70,7 +72,37 @@ export class AuthService {
             faculty: this.findFacultyForDepartment(data.department)
         };
         this.currentUser.set(userWithFaculty);
+      } else if (supabaseUser) {
+        // Self-Healing: Profile not found for a logged-in user. Create it now.
+        console.log(`Profile for user ${supabaseUser.id} not found. Auto-creating one.`);
+        const { data: newUserProfile, error: insertError } = await supabase
+            .from('users')
+            .insert({
+                id: supabaseUser.id,
+                email: supabaseUser.email!,
+                name: supabaseUser.user_metadata.name || 'New User', // Provide fallbacks
+                role: supabaseUser.user_metadata.role || UserRole.Student,
+                department: supabaseUser.user_metadata.department || 'Not Specified',
+                level: supabaseUser.user_metadata.level || 100
+            })
+            .select()
+            .single();
+
+        if (insertError) {
+            console.error('Fatal error: Could not auto-create user profile:', insertError);
+            this.notificationService.show('Critical account error. Please contact support.', 'error', 7000);
+            await this.logout(); // Logout to prevent being in a broken state
+            return;
+        }
+
+        const userWithFaculty: User = {
+            ...newUserProfile,
+            faculty: this.findFacultyForDepartment(newUserProfile.department)
+        };
+        this.currentUser.set(userWithFaculty);
+        this.notificationService.show('Welcome! Your profile has been initialized.', 'success');
       } else {
+        // Should not happen if supabaseUser exists, but as a safeguard.
         this.currentUser.set(null);
       }
     } catch (error: any) {
@@ -105,7 +137,10 @@ export class AuthService {
         return false;
       }
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Pass user metadata directly during signup.
+      // This is the recommended and most reliable approach. The backend trigger `handle_new_user`
+      // will use this metadata to create the corresponding profile in the `users` table.
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -118,18 +153,26 @@ export class AuthService {
         },
       });
 
-      if (authError) {
-        this.notificationService.show(authError.message, 'error');
+      if (error) {
+        this.notificationService.show(error.message, 'error');
         return false;
       }
 
-      if (authData.user) {
-        this.notificationService.show('Registration successful! Please check your email for verification before logging in.', 'success', 5000);
-        this.ngZone.run(() => this.router.navigate(['/login']));
-        return true;
+      // Check if user was created but requires confirmation.
+      // This is the standard flow when email confirmation is enabled.
+      if (data.user && !data.session) {
+        this.notificationService.show('Registration successful! Please check your email for verification before logging in.', 'success', 7000);
+      } else if (data.user && data.session) {
+        // This case might happen if email confirmation is disabled in Supabase settings.
+        this.notificationService.show('Registration successful! You are now logged in.', 'success');
+      } else {
+        // Fallback for any other unexpected state
+        this.notificationService.show('Registration process completed. Please check your email.', 'info');
       }
       
-      return false;
+      this.ngZone.run(() => this.router.navigate(['/login']));
+      return true;
+      
     } catch (error: any) {
       console.error('Registration error:', error);
       this.notificationService.show('An unexpected error occurred during registration. Please try again.', 'error');

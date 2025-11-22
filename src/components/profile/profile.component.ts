@@ -8,7 +8,140 @@ import { UNILAG_FACULTIES, Faculty } from '../../data/unilag-courses';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  templateUrl: './profile.component.html',
+  template: `
+<div class="container mx-auto">
+  <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">My Profile</h1>
+  
+  @if (currentUser(); as user) {
+    <div class="max-w-2xl mx-auto bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg overflow-hidden">
+      
+      @if (!isEditing()) {
+        <!-- Display Mode -->
+        <div>
+          <div class="md:flex">
+            <div class="md:flex-shrink-0 p-8 flex justify-center items-center">
+              <div class="relative group">
+                <img class="rounded-full h-32 w-32 object-cover" [src]="userAvatarUrl()" alt="User Avatar">
+                <label for="avatarUpload" class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  @if(isUploading()) {
+                    <svg class="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  } @else {
+                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  }
+                  <input type="file" id="avatarUpload" class="hidden" (change)="onFileSelected($event)" accept="image/*">
+                </label>
+              </div>
+            </div>
+            <div class="p-8 flex-grow">
+              <div class="uppercase tracking-wide text-sm text-purple-500 dark:text-purple-400 font-semibold capitalize">{{ user.role }}</div>
+              <h2 class="block mt-1 text-2xl leading-tight font-bold text-black dark:text-white">{{ user.name }}</h2>
+              <p class="mt-4 text-gray-500 dark:text-gray-400">{{ user.email }}</p>
+              <div class="mt-4 flex items-center gap-2 flex-wrap">
+                <span class="inline-block bg-blue-200 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                  {{ user.department }}
+                </span>
+                <span class="inline-block bg-green-200 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                  {{ user.level }} Level
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="p-8 border-t border-gray-200/50 dark:border-gray-700/50">
+            <h3 class="font-bold text-lg text-black dark:text-white mb-4">Personal Information</h3>
+            <div class="space-y-3">
+              <div class="flex items-center text-gray-600 dark:text-gray-300">
+                <svg class="w-5 h-5 mr-3 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>
+                <span>{{ user.birthday ? (user.birthday | date:'longDate') : 'No birthday set' }}</span>
+              </div>
+              <div class="flex items-center text-gray-600 dark:text-gray-300">
+                <svg class="w-5 h-5 mr-3 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>
+                <span>{{ user.phone || 'No phone number set' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-8 border-t border-gray-200/50 dark:border-gray-700/50 flex justify-end">
+             <button (click)="startEditing()" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all duration-300">
+                Edit Profile
+              </button>
+          </div>
+        </div>
+      } @else {
+        <!-- Editing Mode -->
+        <form (ngSubmit)="saveProfile()" #profileForm="ngForm">
+          <div class="p-8">
+            <h2 class="text-2xl font-bold text-black dark:text-white mb-6">Edit Profile</h2>
+            <div class="mb-4">
+              <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
+              <input type="text" id="name" name="name" [(ngModel)]="editableUser.name" required
+                class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none placeholder-gray-500 transition">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="faculty" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Faculty</label>
+                    <input type="text" id="faculty" name="faculty" [value]="selectedFaculty()?.name || 'N/A'" disabled
+                      class="w-full px-4 py-3 bg-gray-200/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none placeholder-gray-500 transition disabled:cursor-not-allowed">
+                </div>
+                <div>
+                    <label for="department" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
+                    <input type="text" id="department" name="department" [(ngModel)]="editableUser.department" required disabled
+                      class="w-full px-4 py-3 bg-gray-200/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none placeholder-gray-500 transition disabled:cursor-not-allowed">
+                </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="level" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
+              <select id="level" name="level" [(ngModel)]="editableUser.level" required class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                <option [value]="100">100 Level</option>
+                <option [value]="200">200 Level</option>
+                <option [value]="300">300 Level</option>
+                <option [value]="400">400 Level</option>
+                <option [value]="500">500 Level</option>
+                <option [value]="600">600 Level</option>
+              </select>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label for="birthday" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Birthday</label>
+                <input type="date" id="birthday" name="birthday" [(ngModel)]="editableUser.birthday"
+                  class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none placeholder-gray-500 transition">
+              </div>
+              <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
+                <input type="tel" id="phone" name="phone" [(ngModel)]="editableUser.phone" placeholder="e.g., +1 234 567 890"
+                  class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none placeholder-gray-500 transition">
+              </div>
+            </div>
+
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Email address and role cannot be changed.</p>
+          </div>
+          <div class="p-8 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200/50 dark:border-gray-700/50 flex justify-end space-x-4">
+            <button type="button" (click)="cancelEditing()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+              Cancel
+            </button>
+            <button type="submit" [disabled]="isLoading() || profileForm.invalid"
+              class="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+              @if(isLoading()) {
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Saving...</span>
+              } @else {
+                <span>Save Changes</span>
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  }
+</div>
+`,
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -98,6 +231,7 @@ export class ProfileComponent {
 
     if (file && user) {
       this.isUploading.set(true);
+      this.notificationService.show('Profile picture uploading, it may take a few minutes...', 'info', 7000);
       await this.authService.updateProfilePicture(user, file);
       this.isUploading.set(false);
     }

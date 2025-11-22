@@ -65,6 +65,23 @@ export class AnnouncementsService {
     })();
     return this.announcementsPromise;
   }
+
+  async getRecentAnnouncements(limit: number): Promise<Announcement[]> {
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data as Announcement[];
+    } catch (error: any) {
+      console.error("Error fetching recent announcements:", error.message);
+      this.notificationService.show('Could not fetch recent announcements.', 'error');
+      return [];
+    }
+  }
   
   async createAnnouncement(title: string, content: string, author: string, department: string | null | undefined, level?: number | null): Promise<Announcement | null> {
     if (department === undefined) {

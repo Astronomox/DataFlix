@@ -9,7 +9,302 @@ import { UNILAG_FACULTIES } from '../../data/unilag-courses';
 @Component({
   selector: 'app-timetable',
   standalone: true,
-  templateUrl: './timetable.component.html',
+  template: `
+<div class="container mx-auto">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Weekly Timetable</h1>
+      <p class="mt-1 text-gray-600 dark:text-gray-400">Your schedule for the week ahead.</p>
+    </div>
+  </div>
+
+  @if(isAdmin) {
+    <div class="mb-8 p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
+      <h3 class="text-lg font-bold mb-4">Add New Entry</h3>
+      <form (ngSubmit)="addEntry()" #entryForm="ngForm" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
+        @if(isSuperAdmin) {
+          <div class="w-full">
+              <label for="newDepartment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
+              <select id="newDepartment" [ngModel]="departmentForNewEntry()" (ngModelChange)="departmentForNewEntry.set($event)" name="department" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option value="" disabled>Select Department</option>
+                <option [ngValue]="null">All Departments</option>
+                @for (dept of allDepartments(); track dept) {
+                  <option [value]="dept">{{ dept }}</option>
+                }
+              </select>
+          </div>
+        }
+        <div class="w-full">
+          <label for="newLevel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level</label>
+          @if (isSuperAdmin) {
+            <select id="newLevel" [(ngModel)]="newEntry.level" name="level" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+              <option [ngValue]="null">All Levels</option>
+              <option [ngValue]="100">100 Level</option>
+              <option [ngValue]="200">200 Level</option>
+              <option [ngValue]="300">300 Level</option>
+              <option [ngValue]="400">400 Level</option>
+              <option [ngValue]="500">500 Level</option>
+              <option [ngValue]="600">600 Level</option>
+            </select>
+          } @else {
+            <input type="text"
+              [value]="authService.currentUser()?.level + ' Level'"
+              disabled
+              class="w-full bg-white/10 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+          }
+        </div>
+        <div class="w-full">
+            <label for="newCourse" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Course</label>
+            <input type="text" id="newCourse" placeholder="e.g., CS101" [(ngModel)]="newEntry.course" name="course" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div class="w-full">
+            <label for="newTime" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time</label>
+            <input type="text" id="newTime" placeholder="e.g., 10:00 - 11:00" [(ngModel)]="newEntry.time" name="time" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div class="w-full">
+            <label for="newLocation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+            <input type="text" id="newLocation" placeholder="e.g., Hall A" [(ngModel)]="newEntry.location" name="location" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div class="w-full">
+            <label for="newDay" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day</label>
+            <select id="newDay" [(ngModel)]="newEntry.day" name="day" required class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+              @for (day of weekdays; track day) {
+                <option [value]="day">{{ day }}</option>
+              }
+            </select>
+        </div>
+        <button type="submit" [disabled]="entryForm.invalid" class="w-full bg-purple-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-purple-700 transition disabled:opacity-50 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clip-rule="evenodd" /></svg>
+          <span>Add</span>
+        </button>
+      </form>
+    </div>
+  }
+  
+  @if(timetable().length > 0) {
+    <div class="mb-8 p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg">
+        <h3 class="text-lg font-bold mb-4">Filters</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <label for="levelFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
+              <select id="levelFilter" (change)="onLevelChange($event)" [value]="selectedLevel()" class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  <option [ngValue]="null">All Levels</option>
+                  <option [value]="100">100 Level</option>
+                  <option [value]="200">200 Level</option>
+                  <option [value]="300">300 Level</option>
+                  <option [value]="400">400 Level</option>
+                  <option [value]="500">500 Level</option>
+                  <option [value]="600">600 Level</option>
+              </select>
+            </div>
+            @if(isSuperAdmin) {
+              <div>
+                  <label for="departmentFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
+                  <select id="departmentFilter" (change)="onDepartmentChange($event)" [value]="selectedDepartment()" class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                      <option value="">All Departments</option>
+                      @for(dept of allDepartments(); track dept) {
+                          <option [value]="dept">{{ dept }}</option>
+                      }
+                  </select>
+              </div>
+            }
+            <div>
+                <label for="courseFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course</label>
+                <select id="courseFilter" (change)="onCourseChange($event)" [value]="selectedCourse()" class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">All Courses</option>
+                    @for(course of courses(); track course) {
+                        <option [value]="course">{{ course }}</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label for="locationFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
+                <select id="locationFilter" (change)="onLocationChange($event)" [value]="selectedLocation()" class="w-full bg-white/20 dark:bg-gray-700/50 p-2.5 rounded-lg border border-white/30 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">All Locations</option>
+                    @for(location of locations(); track location) {
+                        <option [value]="location">{{ location }}</option>
+                    }
+                </select>
+            </div>
+            <div class="self-end">
+                <button (click)="clearFilters()" [disabled]="!isAnyFilterActive()" class="w-full bg-gray-500 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+  }
+
+  @if(isLoading()) {
+    <div class="flex justify-center items-center p-16">
+      <svg class="animate-spin h-8 w-8 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+      @for(day of weekdays; track day; let i = $index) {
+        @let dayColor = ['border-blue-500', 'border-green-500', 'border-yellow-500', 'border-red-500', 'border-indigo-500', 'border-orange-500'][i];
+        <div class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg p-4 flex flex-col border-t-4" [class]="dayColor">
+          <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white">{{ day }}</h2>
+          <div class="flex-grow space-y-3">
+            @for(entry of filteredTimetable()[day]; track entry.id) {
+              <div class="relative bg-white/50 dark:bg-gray-700/50 rounded-lg p-3 group hover:shadow-md transition-shadow">
+                <p class="font-bold text-gray-900 dark:text-gray-100">{{ entry.course }}</p>
+                <div class="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
+                  <span>{{ entry.time }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                  <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 a11.842 11.842 0 00.757.433.62.62 0 00.28.14l.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" /></svg>
+                  <span>{{ entry.location }}</span>
+                </div>
+                @if (entry.level) {
+                  <p class="text-xs text-green-600 dark:text-green-400 mt-1 font-semibold">{{ entry.level }} Level</p>
+                } @else if (entry.level === null) {
+                  <p class="text-xs text-purple-500 dark:text-purple-400 mt-1 font-semibold">All Levels</p>
+                }
+                @if (isSuperAdmin) {
+                  <p class="text-xs text-purple-500 dark:text-purple-400 mt-1 font-semibold">{{ entry.department || 'All Departments' }}</p>
+                }
+                @if(isAdmin) {
+                  <div class="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button (click)="openEditModal(entry)" class="p-1 text-blue-400 hover:text-blue-600">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
+                    </button>
+                    <button (click)="openDeleteModal(entry)" class="p-1 text-red-400 hover:text-red-600">
+                       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    </button>
+                  </div>
+                }
+              </div>
+            } @empty {
+                <div class="flex items-center justify-center h-full">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">No classes scheduled.</p>
+                </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if(showNoFilterResultsMessage()) {
+        <div class="mt-8 p-12 bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-lg text-center">
+            <svg class="w-16 h-16 mx-auto text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">No Matching Classes</h2>
+            <p class="mt-2 text-gray-500 dark:text-gray-400">No classes match your current filter selection. Try clearing the filters.</p>
+        </div>
+    }
+  }
+</div>
+
+<!-- Edit Timetable Entry Modal -->
+@if (isEditModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" (click)="closeEditModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-lg" (click)="$event.stopPropagation()">
+      <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">Edit Timetable Entry</h3>
+      <form (ngSubmit)="confirmEdit()" #editEntryForm="ngForm" class="space-y-4">
+        @if (isSuperAdmin) {
+          <div>
+            <label for="editDepartment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
+            <select id="editDepartment" name="department" [(ngModel)]="editableEntry.department" required
+                    class="w-full bg-gray-100 dark:bg-gray-700 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+              <option [ngValue]="null">All Departments</option>
+              @for (dept of allDepartments(); track dept) {
+                <option [value]="dept">{{ dept }}</option>
+              }
+            </select>
+          </div>
+        }
+        <div>
+          <label for="editLevel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level</label>
+          @if (isSuperAdmin) {
+            <select id="editLevel" [(ngModel)]="editableEntry.level" name="level"
+                    class="w-full bg-gray-100 dark:bg-gray-700 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+              <option [ngValue]="null">All Levels</option>
+              <option [ngValue]="100">100 Level</option>
+              <option [ngValue]="200">200 Level</option>
+              <option [ngValue]="300">300 Level</option>
+              <option [ngValue]="400">400 Level</option>
+              <option [ngValue]="500">500 Level</option>
+              <option [ngValue]="600">600 Level</option>
+            </select>
+          } @else {
+              <input type="text"
+                    [value]="authService.currentUser()?.level + ' Level'"
+                    disabled
+                    class="w-full bg-gray-200 dark:bg-gray-700/50 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+          }
+        </div>
+        <div>
+          <label for="editCourse" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Course</label>
+          <input type="text" id="editCourse" [(ngModel)]="editableEntry.course" name="course" required 
+                 class="w-full bg-gray-100 dark:bg-gray-700 p-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div>
+          <label for="editTime" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time</label>
+          <input type="text" id="editTime" [(ngModel)]="editableEntry.time" name="time" required 
+                 class="w-full bg-gray-100 dark:bg-gray-700 p-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div>
+          <label for="editLocation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+          <input type="text" id="editLocation" [(ngModel)]="editableEntry.location" name="location" required 
+                 class="w-full bg-gray-100 dark:bg-gray-700 p-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div>
+          <label for="editDay" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day</label>
+          <select id="editDay" [(ngModel)]="editableEntry.day" name="day" required 
+                  class="w-full bg-gray-100 dark:bg-gray-700 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            @for (day of weekdays; track day) {
+              <option [value]="day">{{ day }}</option>
+            }
+          </select>
+        </div>
+        <div class="flex justify-end space-x-4 pt-4">
+          <button type="button" (click)="closeEditModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="editEntryForm.invalid" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (isDeleteModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" (click)="closeDeleteModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md" (click)="$event.stopPropagation()">
+      <div class="flex items-center">
+        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 sm:mx-0 sm:h-10 sm:w-10">
+          <svg class="h-6 w-6 text-red-600 dark:text-red-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+          <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white">Delete Timetable Entry</h3>
+          <div class="mt-2">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Are you sure you want to delete the entry for <span class="font-semibold">{{ entryToDelete()?.course }}</span> at {{ entryToDelete()?.time }}?
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+        <button (click)="confirmDelete()" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+          Confirm Delete
+        </button>
+        <button (click)="closeDeleteModal()" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 sm:mt-0 sm:w-auto sm:text-sm">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+}
+`,
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -54,7 +349,7 @@ export class TimetableComponent implements OnInit {
   };
   departmentForNewEntry = signal<string | null>('');
 
-  readonly weekdays: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  readonly weekdays: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   courses = computed(() => {
     const allCourses = this.timetable().map(entry => entry.course);
@@ -79,7 +374,8 @@ export class TimetableComponent implements OnInit {
       filtered = filtered.filter(entry => entry.department === dept);
     }
     if (level) {
-      filtered = filtered.filter(entry => entry.level === level || !entry.level);
+      // Strictly filter by the selected level.
+      filtered = filtered.filter(entry => entry.level === level);
     }
     if (course) {
       filtered = filtered.filter(entry => entry.course === course);
