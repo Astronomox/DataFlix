@@ -17,15 +17,7 @@
               "browser": "."
             },
             "browser": "index.tsx",
-            "tsConfig": "tsconfig.json",
-            "assets": [
-              "src/favicon.ico",
-              "src/android-chrome-192x192.png",
-              "src/android-chrome-512x512.png",
-              "src/apple-touch-icon.png",
-              "src/manifest.json",
-              "src/assets"
-            ]
+            "tsConfig": "tsconfig.json"
           },
           "configurations": {
             "production": {
