@@ -21,7 +21,7 @@ A clear weekly schedule with filtering. You know exactly where you need to be an
 Department-specific, level-specific, or broadcast to everyone. Nothing gets lost.
 
 **Dark mode**
-Because we're not animals.
+For a more comfortable lighting level.
 
 **A working contact form**
 Powered by serverless functions and the Resend API. You report an issue, it actually goes somewhere.
