@@ -61,7 +61,9 @@ Create a project at [supabase.com](https://supabase.com). Go to the SQL Editor a
 
 <details>
 <summary>Click to expand the full SQL schema</summary>
-```sql
+
+  
+  ```sql
 -- Users table
 CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
